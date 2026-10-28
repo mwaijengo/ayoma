@@ -1,0 +1,21 @@
+{
+  "version": "1.0.2",
+  "updatedAt": "2026-10-28T07:12:44.028Z",
+  "minAndroid": "7.0",
+  "notes": [
+    "Inacheza link za aina zote: .php, .m3u8, .mpd, .ts, .mp4 na rtsp",
+    "Kicheza video kinatambua aina ya link chenyewe",
+    "Chaneli zenye link za .php sasa zinacheza",
+    "Ujumbe wa hitilafu unasomeka vizuri"
+  ],
+  "files": {
+    "arm64": {
+      "file": "/downloads/AyomaMax.apk",
+      "sizeBytes": 21994672
+    },
+    "armv7": {
+      "file": "/downloads/AyomaMax-armv7.apk",
+      "sizeBytes": 19419772
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+    "name": "AyomaMax Admin",
+    "short_name": "Ayoma Admin",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#090D0C",
+    "theme_color": "#A8EF3A",
+    "description": "AyomaMax admin: channels, packages, users, payments and app controls.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

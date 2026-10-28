@@ -19,7 +19,7 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
-const productionApiUrl = 'https://uhurumax-production.up.railway.app';
+const productionApiUrl = 'https://ayoma-production.up.railway.app';
 
 /// The live API on Railway. For the local API, run with
 /// `--dart-define=API_URL=http://10.0.2.2:8080` (Android emulator).

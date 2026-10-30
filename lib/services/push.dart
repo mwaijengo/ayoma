@@ -9,27 +9,15 @@ import '../state/app_state.dart';
 /// Firebase Cloud Messaging for admin notifications, renewal reminders and
 /// "refresh apps".
 ///
-/// Defaults to the `uhurumax-ceaf2` project (values from google-services.json,
-/// which are public client identifiers). Each can be overridden with a
-/// `--dart-define`: FIREBASE_API_KEY, FIREBASE_APP_ID, FIREBASE_SENDER_ID,
-/// FIREBASE_PROJECT_ID.
+/// Firebase (project `ayomaapp`) is configured natively from
+/// android/app/google-services.json, so Android can deliver pushes even when
+/// the app has been closed for a long time.
 class PushService {
   PushService._(this._state);
 
-  static const _apiKey = String.fromEnvironment(
-    'FIREBASE_API_KEY',
-    defaultValue: 'AIzaSyDKWtU7FUfKoGERt8cokOpxO-5HvPWVPuc',
-  );
-  static const _appId = String.fromEnvironment(
-    'FIREBASE_APP_ID',
-    defaultValue: '1:270201140107:android:88eaf4966577e913c6758e',
-  );
-  static const _senderId = String.fromEnvironment('FIREBASE_SENDER_ID', defaultValue: '270201140107');
-  static const _projectId = String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: 'uhurumax-ceaf2');
-
   /// Must match the channel created in MainActivity and sent by the server.
   static const _channel = AndroidNotificationDetails(
-    'uhurumax_alerts',
+    'ayoma_alerts',
     'Taarifa za AyomaMax',
     channelDescription: 'Vifurushi, mechi na taarifa muhimu',
     importance: Importance.high,
@@ -49,14 +37,7 @@ class PushService {
   static Future<PushService?> start(AppState state) async {
     if (!supported || state.api == null) return null;
     try {
-      await Firebase.initializeApp(
-        options: const FirebaseOptions(
-          apiKey: _apiKey,
-          appId: _appId,
-          messagingSenderId: _senderId,
-          projectId: _projectId,
-        ),
-      );
+      await Firebase.initializeApp();
       final service = PushService._(state);
       await service._init();
       return service;

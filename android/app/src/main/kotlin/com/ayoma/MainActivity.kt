@@ -56,11 +56,17 @@ class MainActivity : FlutterActivity() {
     /** Matches the channel ID the server sends with admin notifications. */
     private fun createAlertsChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val manager = getSystemService(NotificationManager::class.java) ?: return
         val channel = NotificationChannel(
-            "uhurumax_alerts",
+            "ayoma_alerts",
             "Taarifa za AyomaMax",
             NotificationManager.IMPORTANCE_HIGH,
-        ).apply { description = "Vifurushi, mechi na taarifa muhimu" }
-        getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
+        ).apply {
+            description = "Vifurushi, mechi na taarifa muhimu"
+            enableVibration(true)
+            lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+        }
+        manager.createNotificationChannel(channel)
+        manager.deleteNotificationChannel("uhurumax_alerts")
     }
 }

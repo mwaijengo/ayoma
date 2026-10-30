@@ -10,6 +10,9 @@ import { logger } from '../lib/logger';
 type ServiceAccount = { project_id?: string; client_email?: string; private_key?: string };
 
 function loadServiceAccount(): ServiceAccount | null {
+  if (env.fcmServiceAccountBase64) {
+    return JSON.parse(Buffer.from(env.fcmServiceAccountBase64, 'base64').toString('utf8')) as ServiceAccount;
+  }
   if (env.fcmServiceAccountJson) return JSON.parse(env.fcmServiceAccountJson) as ServiceAccount;
   if (env.fcmServiceAccountPath) {
     return JSON.parse(readFileSync(env.fcmServiceAccountPath, 'utf8')) as ServiceAccount;
@@ -18,7 +21,7 @@ function loadServiceAccount(): ServiceAccount | null {
 }
 
 export function pushConfigured(): boolean {
-  return Boolean(env.fcmServiceAccountJson || env.fcmServiceAccountPath);
+  return Boolean(env.fcmServiceAccountBase64 || env.fcmServiceAccountJson || env.fcmServiceAccountPath);
 }
 
 function ensureApp(): void {
@@ -27,7 +30,7 @@ function ensureApp(): void {
   if (!sa?.project_id || !sa.client_email || !sa.private_key) {
     throw new HttpError(
       503,
-      'Push notifications are not configured. Set FCM_SERVICE_ACCOUNT_JSON on the server.',
+      'Push notifications are not configured. Set FCM_SERVICE_ACCOUNT_BASE64 on the server.',
       'PUSH_DISABLED',
     );
   }
@@ -47,7 +50,7 @@ const ANDROID_ALERT: AndroidConfig = {
   priority: 'high', // wakes phones from Doze / deep sleep
   ttl: MAX_TTL_MS,
   notification: {
-    channelId: 'uhurumax_alerts',
+    channelId: 'ayoma_alerts',
     defaultSound: true,
     defaultVibrateTimings: true,
     priority: 'max',
@@ -66,7 +69,10 @@ const RETRY_DELAY_MS = 2000;
 const DEAD_TOKEN_CODES = ['registration-token-not-registered', 'invalid-registration-token', 'invalid-argument'];
 const RETRYABLE_CODES = ['unavailable', 'internal-error', 'server-unavailable', 'unknown-error', 'message-rate-exceeded'];
 
-type Outcome = { delivered: number; dead: string[]; retry: string[]; error?: unknown };
+/** Tokens from another Firebase project (e.g. old UhuruMax installs). */
+const MISMATCH_CODE = 'mismatched-credential';
+
+type Outcome = { delivered: number; dead: string[]; mismatched: string[]; retry: string[]; error?: unknown };
 
 /**
  * Sends to device tokens in batches of 500, many batches at once so a large
@@ -91,6 +97,7 @@ export async function sendToTokens(
   const first = await sendAll(unique, payload);
   let delivered = first.delivered;
   const dead = [...first.dead];
+  const mismatched = [...first.mismatched];
   let failedTokens = first.retry;
 
   if (failedTokens.length > 0) {
@@ -98,8 +105,12 @@ export async function sendToTokens(
     const second = await sendAll(failedTokens, payload);
     delivered += second.delivered;
     dead.push(...second.dead);
+    mismatched.push(...second.mismatched);
     failedTokens = second.retry;
   }
+  // Only once some tokens worked do we know the server key is right and the
+  // mismatched tokens are stale, so a wrong key can never wipe every token.
+  if (delivered > 0) dead.push(...mismatched);
 
   result.delivered = delivered;
   result.invalidTokens = dead;
@@ -117,7 +128,7 @@ async function sendAll(
   tokens: string[],
   payload: Omit<MulticastMessage, 'tokens'>,
 ): Promise<Outcome> {
-  const out: Outcome = { delivered: 0, dead: [], retry: [] };
+  const out: Outcome = { delivered: 0, dead: [], mismatched: [], retry: [] };
   const batches: string[][] = [];
   for (let i = 0; i < tokens.length; i += BATCH_SIZE) batches.push(tokens.slice(i, i + BATCH_SIZE));
 
@@ -129,6 +140,7 @@ async function sendAll(
         if (r.success) return;
         const code = r.error?.code ?? '';
         if (DEAD_TOKEN_CODES.some((c) => code.endsWith(c))) out.dead.push(batch[idx]!);
+        else if (code.endsWith(MISMATCH_CODE)) out.mismatched.push(batch[idx]!);
         else if (RETRYABLE_CODES.some((c) => code.endsWith(c))) out.retry.push(batch[idx]!);
       });
     } catch (err) {

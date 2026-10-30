@@ -20,6 +20,8 @@ export const env = {
   sonicPesaSecretKey: str('SONICPESA_SECRET_KEY'),
   sonicPesaWebhookSecret: str('SONICPESA_WEBHOOK_SECRET'),
 
+  /** The Firebase service account JSON, base64-encoded (safest to paste). */
+  fcmServiceAccountBase64: str('FCM_SERVICE_ACCOUNT_BASE64'),
   fcmServiceAccountJson: str('FCM_SERVICE_ACCOUNT_JSON'),
   fcmServiceAccountPath: str('FCM_SERVICE_ACCOUNT_PATH'),
 };

@@ -1,19 +1,19 @@
 {
-  "version": "1.0.3",
-  "updatedAt": "2026-10-30T11:00:54.483Z",
+  "version": "1.0.4",
+  "updatedAt": "2026-10-30T11:17:35.298Z",
   "minAndroid": "7.0",
   "notes": [
-    "Chaneli zilizofutwa na admin zinaondoka kabisa kwenye app",
-    "Kitufe cha Download kinafungua AyomaStore"
+    "Taarifa za admin zinafika hata app ikiwa imefungwa",
+    "Chaneli zilizofutwa zinaondoka kabisa"
   ],
   "files": {
     "arm64": {
       "file": "/downloads/AyomaMax.apk",
-      "sizeBytes": 22042687
+      "sizeBytes": 22045471
     },
     "armv7": {
       "file": "/downloads/AyomaMax-armv7.apk",
-      "sizeBytes": 19467791
+      "sizeBytes": 19486955
     }
   }
 }

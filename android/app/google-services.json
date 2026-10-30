@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "965826737009",
+    "project_id": "ayomaapp",
+    "storage_bucket": "ayomaapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:965826737009:android:f94b67f25eebcf61903cd0",
+        "android_client_info": {
+          "package_name": "com.ayoma"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCV_-q-GvRAjOlU8SwX6qzkrOc0JBRz9Uk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

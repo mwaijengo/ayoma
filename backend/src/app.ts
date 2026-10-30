@@ -13,7 +13,8 @@ import { adminRouter } from './routes/admin';
 import { appRouter } from './routes/app';
 import { authRouter } from './routes/auth';
 import { mediaRouter } from './routes/media';
-import { webhookRouter } from './routes/webhooks';
+import { handleSonicWebhook, webhookRouter } from './routes/webhooks';
+import { getSetting } from './services/settings';
 
 /** `backend/public`, from both `src/` (dev) and `dist/` (production). */
 const PUBLIC_DIR = resolve(__dirname, '..', 'public');
@@ -34,7 +35,7 @@ export function createApp(): express.Application {
   );
 
   // Webhook signatures are computed over the exact raw body.
-  app.use('/api/v1/webhooks', express.raw({ type: () => true, limit: '1mb' }), (req, _res, next) => {
+  const captureRaw = (req: express.Request, _res: express.Response, next: express.NextFunction) => {
     if (Buffer.isBuffer(req.body)) {
       const raw = req.body.toString('utf8');
       (req as express.Request & { rawBody?: string }).rawBody = raw;
@@ -45,6 +46,21 @@ export function createApp(): express.Application {
       }
     }
     next();
+  };
+  const rawJson = express.raw({ type: () => true, limit: '1mb' });
+  app.use('/api/v1/webhooks', rawJson, captureRaw);
+  app.post('/webhook', rawJson, captureRaw, (req, res, next) => {
+    handleSonicWebhook(req, res).catch(next);
+  });
+  // SonicPesa posts here when the dashboard URL is only the Railway host.
+  app.post('/', rawJson, captureRaw, (req, res, next) => {
+    const body = req.body as Record<string, unknown> | undefined;
+    const event = String(body?.event ?? '');
+    if (!body || (body.order_id == null && body.orderId == null && !event.startsWith('payment.'))) {
+      res.status(404).json({ ok: false });
+      return;
+    }
+    handleSonicWebhook(req, res).catch(next);
   });
   app.use(express.json({ limit: '1mb' }));
   app.use(
@@ -77,6 +93,17 @@ export function createApp(): express.Application {
       res.json({ ok: true, db: true, time: new Date() });
     } catch {
       res.status(503).json({ ok: false, db: false });
+    }
+  });
+
+  // AyomaStore help button: the same WhatsApp number the admin app sets.
+  app.get('/api/v1/store/support', async (_req, res) => {
+    try {
+      const { whatsapp } = await getSetting('support');
+      res.setHeader('Cache-Control', 'public, max-age=60');
+      res.json({ ok: true, whatsapp });
+    } catch {
+      res.status(503).json({ ok: false });
     }
   });
 

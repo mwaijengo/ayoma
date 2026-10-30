@@ -33,10 +33,7 @@ class SettingsScreen extends StatelessWidget {
             GlowCard(
               radius: 18,
               color: AppColors.surface,
-              borderColor: AppColors.greenA(0.18),
-              glowCenter: const Alignment(0.8, -0.8),
-              glowRadius: 0.63,
-              glowAlpha: 0.12,
+              borderColor: AppColors.green,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -248,7 +245,7 @@ class SettingsScreen extends StatelessWidget {
     return showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
-      barrierColor: const Color(0xB3000000),
+      barrierColor: Colors.black,
       builder: (_) => const _ClearCacheSheet(),
     );
   }
@@ -259,7 +256,7 @@ class SettingsScreen extends StatelessWidget {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      barrierColor: const Color(0xB3000000),
+      barrierColor: Colors.black,
       builder: (sheetContext) => _QualitySheet(
         selected: state.quality,
         onSelect: (quality) {
@@ -294,14 +291,14 @@ class _CopyButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(LucideIcons.copy, size: 14, color: AppColors.green),
+            const Icon(LucideIcons.copy, size: 14, color: AppColors.ink),
             const SizedBox(width: 5),
             Text(
               'Nakili',
               style: uStyle(
                 10,
                 weight: FontWeight.w800,
-                color: AppColors.green,
+                color: AppColors.ink,
               ),
             ),
           ],
@@ -390,12 +387,23 @@ class _QualitySheet extends StatelessWidget {
                               children: [
                                 Text(
                                   quality.label,
-                                  style: uStyle(12, weight: FontWeight.w700),
+                                  style: uStyle(
+                                    12,
+                                    weight: FontWeight.w700,
+                                    color: quality == selected
+                                        ? AppColors.ink
+                                        : AppColors.text,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   _hints[quality]!,
-                                  style: uStyle(9, color: AppColors.muted),
+                                  style: uStyle(
+                                    9,
+                                    color: quality == selected
+                                        ? AppColors.ink
+                                        : AppColors.muted,
+                                  ),
                                 ),
                               ],
                             ),
@@ -404,7 +412,7 @@ class _QualitySheet extends StatelessWidget {
                             const Icon(
                               LucideIcons.check,
                               size: 18,
-                              color: AppColors.green,
+                              color: AppColors.ink,
                             ),
                         ],
                       ),
@@ -480,7 +488,7 @@ class _ClearCacheSheetState extends State<_ClearCacheSheet> {
                   child: const Icon(
                     LucideIcons.refreshCw,
                     size: 26,
-                    color: AppColors.green,
+                    color: AppColors.ink,
                   ),
                 ),
               ),

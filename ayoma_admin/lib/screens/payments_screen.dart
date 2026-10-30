@@ -139,7 +139,7 @@ class PaymentTile extends StatelessWidget {
       leading: Container(
         width: 40,
         height: 40,
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
         child: Icon(
           switch (p.status) {
             'paid' => LucideIcons.check,
@@ -147,7 +147,7 @@ class PaymentTile extends StatelessWidget {
             _ => LucideIcons.x,
           },
           size: 18,
-          color: color,
+          color: AppColors.ink,
         ),
       ),
       title: Text(p.who, maxLines: 1, overflow: TextOverflow.ellipsis, style: uStyle(14.5, weight: FontWeight.w700)),

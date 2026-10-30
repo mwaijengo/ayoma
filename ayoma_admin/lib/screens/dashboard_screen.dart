@@ -322,7 +322,7 @@ class _QuickActions extends StatelessWidget {
                       width: 38,
                       height: 38,
                       decoration: BoxDecoration(color: AppColors.greenA(0.12), borderRadius: BorderRadius.circular(12)),
-                      child: Icon(icon, size: 18, color: AppColors.green),
+                      child: Icon(icon, size: 18, color: AppColors.ink),
                     ),
                     const SizedBox(height: 8),
                     Text(

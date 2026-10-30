@@ -142,16 +142,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         builder: (context, data, reload) => [
           if (!data.pushConfigured)
             Panel(
-              color: AppColors.amber.withValues(alpha: 0.08),
-              borderColor: AppColors.amber.withValues(alpha: 0.3),
+              color: AppColors.amber,
+              borderColor: AppColors.amber,
               child: Row(
                 children: [
-                  const Icon(LucideIcons.triangleAlert, size: 18, color: AppColors.amber),
+                  const Icon(LucideIcons.triangleAlert, size: 18, color: AppColors.ink),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Push is not configured on the server (FCM_SERVICE_ACCOUNT_JSON). Messages are logged but not delivered.',
-                      style: uStyle(12.5, color: AppColors.amber, height: 1.4),
+                      style: uStyle(12.5, color: AppColors.ink, height: 1.4),
                     ),
                   ),
                 ],

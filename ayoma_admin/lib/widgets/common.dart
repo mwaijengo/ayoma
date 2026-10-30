@@ -203,15 +203,15 @@ class Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.13),
+        color: color,
         borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
+        border: Border.all(color: color),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[Icon(icon, size: 11, color: color), const SizedBox(width: 4)],
-          Text(label, style: uStyle(10.5, weight: FontWeight.w800, color: color, letterSpacing: 0.3)),
+          if (icon != null) ...[Icon(icon, size: 11, color: AppColors.ink), const SizedBox(width: 4)],
+          Text(label, style: uStyle(10.5, weight: FontWeight.w800, color: AppColors.ink, letterSpacing: 0.3)),
         ],
       ),
     );

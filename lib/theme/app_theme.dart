@@ -11,8 +11,8 @@ class AppColors {
   static const surface2 = Color(0xFF1D2E46);
   static const sheet = Color(0xFF152338);
   static const navBar = Color(0xFF122135);
-  static const line = Color(0x14FFFFFF);
-  static const cardBorder = Color(0x6680B4FF);
+  static const line = Color(0xFF2C3E58);
+  static const cardBorder = Color(0xFF80B4FF);
   static const muted = Color(0xFF8D9794);
   static const dim = Color(0xFF68716E);
   static const faint = Color(0xFF515956);
@@ -26,7 +26,8 @@ class AppColors {
   static const toggleOff = Color(0xFF2E3D52);
   static const toggleKnobOff = Color(0xFF8D9693);
 
-  static Color greenA(double alpha) => green.withValues(alpha: alpha);
+  /// Solid green. Alpha is ignored so green is never mixed with another color.
+  static Color greenA(double _) => green;
 }
 
 class AppTheme {

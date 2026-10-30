@@ -142,7 +142,7 @@ appRouter.post(
       .object({
         planId: z.string().min(1),
         name: z.string().trim().min(3).max(80),
-        phone: z.string().regex(/^0\d{9}$/, 'Namba ya simu ianze na 0 na iwe na tarakimu 10'),
+        phone: z.string().trim().min(9).max(20),
       })
       .parse(req.body);
     await getActivePlan(body.planId);

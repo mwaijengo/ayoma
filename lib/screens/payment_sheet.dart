@@ -10,6 +10,30 @@ import '../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
+/// `07…`, `255…` and `+255…` all become `07XXXXXXXX`.
+String normalizeTzPhone(String raw) {
+  var digits = raw.replaceAll(RegExp(r'\D'), '');
+  if (digits.startsWith('255') && digits.length == 12) {
+    digits = '0${digits.substring(3)}';
+  } else if (digits.length == 9 && RegExp(r'^[67]').hasMatch(digits)) {
+    digits = '0$digits';
+  }
+  return digits;
+}
+
+/// Wallet that will show the PIN prompt for this Tanzanian number.
+String walletName(String local) {
+  if (local.length < 3) return 'mtandao wako';
+  return switch (local.substring(1, 3)) {
+    '74' || '75' || '76' => 'M-Pesa',
+    '68' || '69' || '78' => 'Airtel Money',
+    '65' || '67' || '71' || '77' || '63' || '64' => 'Mixx by Yas',
+    '61' || '62' => 'HaloPesa',
+    '73' => 'TTCL Pesa',
+    _ => 'mtandao wako',
+  };
+}
+
 /// Shows the checkout sheet. Resolves to `true` when a plan was activated.
 Future<bool> showPaymentSheet(BuildContext context, Plan plan) async {
   final result = await showModalBottomSheet<bool>(
@@ -17,7 +41,7 @@ Future<bool> showPaymentSheet(BuildContext context, Plan plan) async {
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Colors.transparent,
-    barrierColor: const Color(0xB3000000),
+    barrierColor: Colors.black,
     builder: (_) => PaymentSheet(plan: plan),
   );
   return result ?? false;
@@ -36,7 +60,7 @@ enum _Stage { form, waiting, done }
 
 class _PaymentSheetState extends State<PaymentSheet> {
   static const _pollEvery = Duration(seconds: 3);
-  static const _pollFor = Duration(minutes: 2);
+  static const _pollFor = Duration(minutes: 3);
 
   late final AppState _state = AppScope.read(context);
   late final _name = TextEditingController(text: _state.subscriberName);
@@ -65,17 +89,19 @@ class _PaymentSheetState extends State<PaymentSheet> {
 
   Future<void> _submit() async {
     final name = _name.text.trim();
-    final phone = _phone.text;
+    final phone = normalizeTzPhone(_phone.text);
     if (name.split(RegExp(r'\s+')).length < 2) {
       setState(() => _error = 'Tafadhali andika jina lako kamili.');
       return;
     }
-    if (!RegExp(r'^0\d{9}$').hasMatch(phone)) {
+    if (!RegExp(r'^0[67]\d{8}$').hasMatch(phone)) {
       setState(
-        () => _error = 'Namba ya simu ianze na 0 na iwe na tarakimu 10.',
+        () => _error =
+            'Weka namba ya M-Pesa, Mixx by Yas, Airtel Money, HaloPesa au TTCL.',
       );
       return;
     }
+    _phone.text = phone;
     FocusScope.of(context).unfocus();
     setState(() {
       _error = '';
@@ -107,6 +133,9 @@ class _PaymentSheetState extends State<PaymentSheet> {
         _stage = _Stage.waiting;
       });
       _poll = Timer.periodic(_pollEvery, (_) => _check());
+      Future<void>.delayed(const Duration(seconds: 2), () {
+        if (mounted && _stage == _Stage.waiting) _check();
+      });
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -120,12 +149,13 @@ class _PaymentSheetState extends State<PaymentSheet> {
     final id = _paymentId;
     final api = _state.api;
     if (id == null || api == null || _checking) return;
-    if (!manual && DateTime.now().isAfter(_pollUntil!)) {
-      _backToForm(
-        'Hatukupokea uthibitisho wa malipo. Kama umeshalipa, '
-        'kifurushi kitaanza punde. Vinginevyo jaribu tena.',
-      );
+    if (!manual && _pollUntil != null && DateTime.now().isAfter(_pollUntil!)) {
+      _poll?.cancel();
       _state.sync(force: true);
+      if (mounted) {
+        setState(() => _error =
+            'Bado tunasubiri PIN. Ukimaliza kuweka PIN, gusa "Nimeshalipa".');
+      }
       return;
     }
     if (manual) setState(() => _checking = true);
@@ -398,12 +428,20 @@ class _PaymentSheetState extends State<PaymentSheet> {
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 320),
             child: Text(
-              'Tumetuma ombi la ${_plan.price} kwenda ${_phone.text}. '
-              'Fungua ujumbe kwenye simu yako na uweke PIN kuthibitisha.',
+              'Tumetuma ombi la ${_plan.price} kwenda ${walletName(_phone.text)} '
+              '(${_phone.text}). Fungua dirisha la PIN kwenye simu yako na ukubali.',
               textAlign: TextAlign.center,
               style: uStyle(11, color: AppColors.muted, height: 1.7),
             ),
           ),
+          if (_error.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              _error,
+              textAlign: TextAlign.center,
+              style: uStyle(10, color: AppColors.muted),
+            ),
+          ],
           const SizedBox(height: 22),
           AppButton(
             label: 'Nimeshalipa, angalia',
@@ -544,12 +582,19 @@ class _PlanOption extends StatelessWidget {
                 children: [
                   Text(
                     'Kifurushi cha ${plan.name} (siku ${plan.days})',
-                    style: uStyle(11, weight: FontWeight.w700),
+                    style: uStyle(
+                      11,
+                      weight: FontWeight.w700,
+                      color: selected ? AppColors.ink : AppColors.text,
+                    ),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     '${plan.description} • ${plan.quality}',
-                    style: uStyle(8, color: AppColors.muted),
+                    style: uStyle(
+                      8,
+                      color: selected ? AppColors.ink : AppColors.muted,
+                    ),
                   ),
                 ],
               ),
@@ -560,7 +605,7 @@ class _PlanOption extends StatelessWidget {
               style: uStyle(
                 14,
                 weight: FontWeight.w700,
-                color: selected ? AppColors.green : AppColors.text,
+                color: selected ? AppColors.ink : AppColors.text,
               ),
             ),
             if (expanded != null) ...[
@@ -568,10 +613,10 @@ class _PlanOption extends StatelessWidget {
               AnimatedRotation(
                 turns: expanded! ? 0.5 : 0,
                 duration: const Duration(milliseconds: 200),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.chevronDown,
                   size: 18,
-                  color: AppColors.muted,
+                  color: selected ? AppColors.ink : AppColors.muted,
                 ),
               ),
             ],

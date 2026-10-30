@@ -48,23 +48,38 @@ export async function startMobilePayment(
       'PAYMENTS_DISABLED',
     );
   }
+  const phone = sonic.parseTzPhone(input.phone);
+  if (!phone.ok) throw new HttpError(400, phone.message, 'INVALID_PHONE');
   const plan = await getActivePlan(input.planId);
 
-  await query('UPDATE users SET name = $2, phone = $3 WHERE id = $1', [
-    user.id,
-    input.name,
-    input.phone,
-  ]);
+  // A second push while the first USSD is open makes every network say "session busy".
+  const open = await queryOne<PaymentRow>(
+    `SELECT * FROM payments
+     WHERE user_id = $1 AND status = 'pending' AND phone = $2 AND plan_id = $3
+       AND created_at > now() - interval '3 minutes'
+     ORDER BY id DESC LIMIT 1`,
+    [user.id, phone.local, plan.id],
+  );
+  if (open?.order_id) return open;
+  if (open && Date.now() - new Date(open.created_at).getTime() < 45_000) {
+    throw new HttpError(
+      409,
+      `Ombi la PIN ya ${phone.wallet} tayari limetumwa. Angalia simu yako, usitume ombi jingine.`,
+      'USSD_BUSY',
+    );
+  }
+
+  await query('UPDATE users SET name = $2, phone = $3 WHERE id = $1', [user.id, input.name, phone.local]);
 
   const payment = await queryOne<PaymentRow>(
     `INSERT INTO payments (user_id, plan_id, plan_name, days, amount_tzs, phone, payer_name, provider)
      VALUES ($1, $2, $3, $4, $5, $6, $7, 'sonicpesa') RETURNING *`,
-    [user.id, plan.id, plan.name, plan.days, plan.price_tzs, input.phone, input.name],
+    [user.id, plan.id, plan.name, plan.days, plan.price_tzs, phone.local, input.name],
   );
   if (!payment) throw new Error('payment insert failed');
 
   const order = await sonic.createOrder({
-    phone: input.phone,
+    phone: phone.local,
     name: input.name,
     email: `user${user.id}@ayoma.app`,
     amountTzs: plan.price_tzs,
@@ -73,13 +88,21 @@ export async function startMobilePayment(
   });
 
   if (!order.ok) {
+    const maybeSent = /limetumwa|angalia simu/i.test(order.message);
+    if (maybeSent) {
+      const waiting = await queryOne<PaymentRow>(
+        `UPDATE payments SET message = $2 WHERE id = $1 RETURNING *`,
+        [payment.id, `Angalia simu yako na uweke PIN ya ${phone.wallet}.`],
+      );
+      return waiting ?? payment;
+    }
     await markFailed(payment.id, order.message);
     throw new HttpError(400, order.message, 'PAYMENT_START_FAILED');
   }
 
   const updated = await queryOne<PaymentRow>(
     `UPDATE payments SET order_id = $2, message = $3 WHERE id = $1 RETURNING *`,
-    [payment.id, order.orderId, 'Weka PIN kwenye simu yako kukamilisha malipo.'],
+    [payment.id, order.orderId, `Weka PIN ya ${phone.wallet} kwenye simu yako.`],
   );
   return updated ?? payment;
 }

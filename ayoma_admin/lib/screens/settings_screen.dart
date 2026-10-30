@@ -198,7 +198,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 const SectionLabel('Maintenance mode'),
                 Panel(
-                  borderColor: _maintenance ? AppColors.amber.withValues(alpha: 0.5) : null,
+                  borderColor: _maintenance ? AppColors.amber : null,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -342,27 +342,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 SectionLabel('Danger zone', key: _dangerKey),
                 Panel(
-                  color: AppColors.red.withValues(alpha: 0.06),
-                  borderColor: AppColors.red.withValues(alpha: 0.35),
+                  color: AppColors.red,
+                  borderColor: AppColors.red,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Row(
                         children: [
-                          const Icon(LucideIcons.triangleAlert, size: 18, color: AppColors.error),
+                          const Icon(LucideIcons.triangleAlert, size: 18, color: AppColors.ink),
                           const SizedBox(width: 8),
-                          Text('Downgrade all premium users', style: uStyle(15, weight: FontWeight.w800, color: AppColors.error)),
+                          Text('Downgrade all premium users', style: uStyle(15, weight: FontWeight.w800, color: AppColors.ink)),
                         ],
                       ),
                       const SizedBox(height: 6),
                       Text(
                         'Chomoa betri kwa watumiaji wote '
                         'watumiaji wote wataondolewa premium.',
-                        style: uStyle(13, color: AppColors.muted, height: 1.4),
+                        style: uStyle(13, color: AppColors.ink, height: 1.4),
                       ),
                       const SizedBox(height: 14),
                       FilledButton.icon(
-                        style: FilledButton.styleFrom(backgroundColor: AppColors.red, foregroundColor: Colors.white),
+                        style: FilledButton.styleFrom(backgroundColor: AppColors.ink, foregroundColor: AppColors.red),
                         onPressed: _downgradeAll,
                         icon: const Icon(LucideIcons.userX, size: 18),
                         label: const Text('Downgrade everyone to free'),

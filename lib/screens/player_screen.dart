@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
@@ -295,20 +294,18 @@ class _PlayerScreenState extends State<PlayerScreen>
               AnimatedOpacity(
                 opacity: _controlsVisible || _player == null ? 1 : 0,
                 duration: const Duration(milliseconds: 250),
-                child: const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      stops: [0, 0.32, 0.65, 1],
-                      colors: [
-                        Color(0xB3000000),
-                        Color(0x00000000),
-                        Color(0x00000000),
-                        Color(0xCC000000),
-                      ],
+                child: const Column(
+                  children: [
+                    ColoredBox(
+                      color: Colors.black,
+                      child: SizedBox(height: 96, width: double.infinity),
                     ),
-                  ),
+                    Spacer(),
+                    ColoredBox(
+                      color: Colors.black,
+                      child: SizedBox(height: 140, width: double.infinity),
+                    ),
+                  ],
                 ),
               ),
               AnimatedOpacity(
@@ -375,7 +372,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                    color: const Color(0x59FFFFFF),
+                                    color: Colors.white,
                                   ),
                                 ),
                                 child: Text(
@@ -393,19 +390,14 @@ class _PlayerScreenState extends State<PlayerScreen>
                             onTap: _togglePlay,
                             scale: 0.92,
                             semanticLabel: _playing ? 'Simamisha' : 'Cheza',
-                            child: ClipOval(
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 9, sigmaY: 9),
-                                child: Container(
-                                  width: 66,
-                                  height: 66,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: const Color(0x99060808),
-                                    border: Border.all(
-                                      color: const Color(0x3DFFFFFF),
-                                    ),
-                                  ),
+                            child: Container(
+                              width: 66,
+                              height: 66,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.black,
+                                border: Border.all(color: Colors.white),
+                              ),
                                   child: _playing
                                       ? Row(
                                           mainAxisAlignment:
@@ -421,8 +413,6 @@ class _PlayerScreenState extends State<PlayerScreen>
                                           size: 36,
                                           color: Colors.white,
                                         ),
-                                ),
-                              ),
                             ),
                           ),
                         ),
@@ -557,7 +547,7 @@ class _PlayerScreenState extends State<PlayerScreen>
               if (_error != null)
                 Positioned.fill(
                   child: ColoredBox(
-                    color: const Color(0xD9000000),
+                    color: Colors.black,
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 32),

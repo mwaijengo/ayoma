@@ -140,15 +140,15 @@ class _Banner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: color),
+          Icon(icon, size: 18, color: AppColors.ink),
           const SizedBox(width: 10),
-          Expanded(child: Text(text, style: uStyle(13, color: color, height: 1.35))),
+          Expanded(child: Text(text, style: uStyle(13, color: AppColors.ink, height: 1.35))),
         ],
       ),
     );

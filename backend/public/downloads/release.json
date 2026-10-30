@@ -1,21 +1,21 @@
 {
   "version": "1.0.2",
-  "updatedAt": "2026-10-28T07:12:44.028Z",
+  "updatedAt": "2026-10-30T07:10:00.000Z",
   "minAndroid": "7.0",
   "notes": [
-    "Inacheza link za aina zote: .php, .m3u8, .mpd, .ts, .mp4 na rtsp",
-    "Kicheza video kinatambua aina ya link chenyewe",
-    "Chaneli zenye link za .php sasa zinacheza",
-    "Ujumbe wa hitilafu unasomeka vizuri"
+    "Nembo mpya ya AYOMA TV kwenye programu na skrini ya kufungua",
+    "Kicheza video kinacheza link za http na https za aina zote",
+    "Rangi safi bila mchanganyiko kwenye skrini zote",
+    "Malipo kwa M-Pesa, Mixx by Yas, Airtel Money na HaloPesa"
   ],
   "files": {
     "arm64": {
       "file": "/downloads/AyomaMax.apk",
-      "sizeBytes": 21994672
+      "sizeBytes": 22042687
     },
     "armv7": {
       "file": "/downloads/AyomaMax-armv7.apk",
-      "sizeBytes": 19419772
+      "sizeBytes": 19484175
     }
   }
 }

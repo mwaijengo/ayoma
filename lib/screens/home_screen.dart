@@ -262,7 +262,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
                         decoration: BoxDecoration(
                           color: i == _index
                               ? AppColors.green
-                              : const Color(0x66FFFFFF),
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
@@ -446,13 +446,13 @@ class _UpgradeCardState extends State<_UpgradeCard> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.red.withValues(alpha: 0.12),
+            color: AppColors.red,
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(
             LucideIcons.clock3,
             size: 21,
-            color: AppColors.error,
+            color: AppColors.ink,
           ),
         ),
         title: 'Umebakiwa na ${_format(remaining)}',
@@ -475,17 +475,9 @@ class _UpgradeCardState extends State<_UpgradeCard> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: warning
-              ? AppColors.red.withValues(alpha: 0.3)
-              : AppColors.greenA(0.16),
+          color: warning ? AppColors.red : AppColors.green,
         ),
-        gradient: LinearGradient(
-          begin: const Alignment(-0.9, -1),
-          end: const Alignment(0.9, 1),
-          colors: warning
-              ? const [Color(0xFF231412), AppColors.surface]
-              : const [Color(0xFF17210F), AppColors.surface],
-        ),
+        color: AppColors.surface,
       ),
       child: Row(
         children: [

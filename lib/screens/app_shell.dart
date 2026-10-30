@@ -126,7 +126,7 @@ class _BottomNav extends StatelessWidget {
       height: 72 + bottom,
       padding: EdgeInsets.only(bottom: bottom),
       decoration: const BoxDecoration(
-        color: Color(0xF2122135),
+        color: AppColors.navBar,
         border: Border(top: BorderSide(color: AppColors.line)),
       ),
       child: Row(

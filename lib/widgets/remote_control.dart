@@ -223,7 +223,7 @@ class _StatusScreenState extends State<StatusScreen> {
                     color: AppColors.greenA(0.1),
                     border: Border.all(color: AppColors.greenA(0.3)),
                   ),
-                  child: Icon(widget.icon, size: 34, color: AppColors.green),
+                  child: Icon(widget.icon, size: 34, color: AppColors.ink),
                 ),
                 const SizedBox(height: 22),
                 Text(

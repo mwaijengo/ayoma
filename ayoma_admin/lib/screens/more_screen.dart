@@ -133,8 +133,8 @@ class _Item extends StatelessWidget {
       leading: Container(
         width: 38,
         height: 38,
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-        child: Icon(icon, size: 18, color: color),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
+        child: Icon(icon, size: 18, color: AppColors.ink),
       ),
       title: Text(title, style: uStyle(14.5, weight: FontWeight.w700, color: danger ? AppColors.error : AppColors.text)),
       subtitle: subtitle == null

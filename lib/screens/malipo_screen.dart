@@ -173,16 +173,8 @@ class _CurrentPlanCard extends StatelessWidget {
         children: [
           GlowCard(
             radius: 20,
-            borderColor: AppColors.greenA(0.2),
-            glowCenter: const Alignment(0.8, -1),
-            glowRadius: 0.58,
-            glowAlpha: 0.13,
-            gradient: const LinearGradient(
-              begin: Alignment(-0.7, -1),
-              end: Alignment(0.7, 1),
-              stops: [0, 0.6],
-              colors: [Color(0xFF182010), AppColors.surface],
-            ),
+            borderColor: AppColors.green,
+            color: AppColors.surface,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -226,7 +218,7 @@ class _CurrentPlanCard extends StatelessWidget {
                         style: uStyle(
                           7,
                           weight: FontWeight.w800,
-                          color: AppColors.green,
+                          color: AppColors.ink,
                         ),
                       ),
                     ),
@@ -262,7 +254,7 @@ class _CurrentPlanCard extends StatelessWidget {
                         ProgressBar(
                           value: fraction.clamp(0.02, 1.0),
                           height: 5,
-                          track: const Color(0x14FFFFFF),
+                          track: AppColors.line,
                         ),
                       ],
                     ),
@@ -296,7 +288,7 @@ class _CurrentPlanCard extends StatelessWidget {
                   const ProgressBar(
                     value: 0.02,
                     height: 5,
-                    track: Color(0x14FFFFFF),
+                    track: AppColors.line,
                   ),
                 ],
                 const SizedBox(height: 17),
@@ -315,7 +307,7 @@ class _CurrentPlanCard extends StatelessWidget {
                         const Icon(
                           LucideIcons.clock3,
                           size: 17,
-                          color: AppColors.green,
+                          color: AppColors.ink,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -324,34 +316,20 @@ class _CurrentPlanCard extends StatelessWidget {
                             style: uStyle(
                               10,
                               weight: FontWeight.w800,
-                              color: AppColors.green,
+                              color: AppColors.ink,
                             ),
                           ),
                         ),
                         const Icon(
                           LucideIcons.chevronRight,
                           size: 18,
-                          color: AppColors.green,
+                          color: AppColors.ink,
                         ),
                       ],
                     ),
                   ),
                 ),
               ],
-            ),
-          ),
-          Positioned(
-            right: -48,
-            top: -48,
-            child: IgnorePointer(
-              child: Container(
-                width: 110,
-                height: 110,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.greenA(0.08)),
-                ),
-              ),
             ),
           ),
         ],
@@ -387,22 +365,9 @@ class _PlanCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: recommended ? AppColors.greenA(0.35) : AppColors.line,
+                color: recommended ? AppColors.green : AppColors.line,
               ),
-              color: recommended ? null : AppColors.surface,
-              gradient: recommended
-                  ? LinearGradient(
-                      begin: const Alignment(-1, -0.2),
-                      end: const Alignment(1, 0.2),
-                      colors: [
-                        Color.alphaBlend(
-                          AppColors.greenA(0.06),
-                          AppColors.surface,
-                        ),
-                        AppColors.surface,
-                      ],
-                    )
-                  : null,
+              color: AppColors.surface,
             ),
             child: Row(
               children: [

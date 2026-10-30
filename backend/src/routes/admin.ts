@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 
-import { BUSINESS_TZ, env } from '../config/env';
+import { BUSINESS_TZ } from '../config/env';
 import { query, queryOne } from '../db/pool';
 import { HttpError, intParam, route } from '../lib/http';
 import { logger } from '../lib/logger';
@@ -28,7 +28,7 @@ import {
   type UserRow,
 } from '../services/serializers';
 import { bumpRefreshToken, getSetting, setSetting } from '../services/settings';
-import { sonicPesaConfigured } from '../services/sonicPesa';
+import { sonicPesaConfigured, webhookSigningSecret } from '../services/sonicPesa';
 
 export const adminRouter = Router();
 adminRouter.use(requireAdmin);
@@ -652,7 +652,7 @@ async function settingsPayload() {
     refreshToken: refresh.token,
     services: {
       sonicPesa: sonicPesaConfigured(),
-      sonicPesaWebhook: env.sonicPesaWebhookSecret.length > 0,
+      sonicPesaWebhook: webhookSigningSecret().length > 0,
       push: pushConfigured(),
     },
   };

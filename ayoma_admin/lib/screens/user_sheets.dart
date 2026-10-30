@@ -28,7 +28,7 @@ class UserAvatar extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(size * 0.32)),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(size * 0.32)),
       child: Icon(
         user.status == UserStatus.premium
             ? LucideIcons.crown
@@ -36,7 +36,7 @@ class UserAvatar extends StatelessWidget {
             ? LucideIcons.ban
             : LucideIcons.smartphone,
         size: size * 0.45,
-        color: color,
+        color: AppColors.ink,
       ),
     );
   }
@@ -612,9 +612,9 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = primary ? AppColors.ink : (danger ? AppColors.error : AppColors.text);
+    final color = primary || danger ? AppColors.ink : AppColors.text;
     return Material(
-      color: primary ? AppColors.green : (danger ? AppColors.red.withValues(alpha: 0.1) : AppColors.surface2),
+      color: primary ? AppColors.green : (danger ? AppColors.red : AppColors.surface2),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),

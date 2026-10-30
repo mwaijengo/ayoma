@@ -3,7 +3,7 @@
     "short_name": "AyomaMax",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#00000000",
+    "background_color": "#000000",
     "theme_color": "#A8EF3A",
     "description": "AyomaMax - live TV and sports streaming.",
     "orientation": "portrait-primary",

@@ -62,16 +62,16 @@ dev_dependencies:
 flutter_launcher_icons:
   image_path: assets/icon/app_icon.png
   android: true
-  adaptive_icon_background: "#00000000"
+  adaptive_icon_background: "#000000"
   adaptive_icon_foreground: assets/icon/app_icon_foreground.png
   ios: true
   # iOS icons cannot be transparent.
   remove_alpha_ios: true
-  background_color_ios: "#090D0C"
+  background_color_ios: "#000000"
   web:
     generate: true
     image_path: assets/icon/app_icon.png
-    background_color: "#00000000"
+    background_color: "#000000"
     theme_color: "#A8EF3A"
   windows:
     generate: true
@@ -87,6 +87,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/brand/ayoma_logo.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

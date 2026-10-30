@@ -1,48 +1,63 @@
-import { Router, type Request } from 'express';
+import { Router, type Request, type Response } from 'express';
 
-import { env } from '../config/env';
 import { queryOne } from '../db/pool';
-import { route } from '../lib/http';
 import { logger } from '../lib/logger';
 import { markFailed, markPaid, refreshPayment } from '../services/payments';
 import type { PaymentRow } from '../services/serializers';
-import { parseWebhook, verifyWebhook } from '../services/sonicPesa';
+import { failureMessage, parseWebhook, verifyWebhook, webhookPhone } from '../services/sonicPesa';
 
 export const webhookRouter = Router();
 
 type RawRequest = Request & { rawBody?: string };
 
-webhookRouter.post(
-  '/sonicpesa',
-  route(async (req, res) => {
-    const raw = (req as RawRequest).rawBody ?? JSON.stringify(req.body ?? {});
-    const signature =
-      req.header('x-sonicpesa-signature') ?? req.header('x-webhook-signature') ?? req.header('x-signature');
-    const signed = verifyWebhook(raw, signature);
+/** SonicPesa must get HTTP 200 within 5 seconds, then it stops retrying. */
+export async function handleSonicWebhook(req: Request, res: Response): Promise<void> {
+  const raw = (req as RawRequest).rawBody ?? JSON.stringify(req.body ?? {});
+  const signature =
+    req.header('x-sonicpesa-signature') ??
+    req.header('x-webhook-signature') ??
+    req.header('x-signature') ??
+    req.header('x-hub-signature-256');
+  const payload = (req.body ?? {}) as Record<string, unknown>;
+  const { orderId, status } = parseWebhook(payload);
+  const signed = verifyWebhook(raw, signature);
 
-    const { orderId, status } = parseWebhook((req.body ?? {}) as Record<string, unknown>);
-    if (!orderId) {
-      res.status(400).json({ ok: false, error: 'Missing order id' });
-      return;
-    }
-    const payment = await queryOne<PaymentRow>('SELECT * FROM payments WHERE order_id = $1', [orderId]);
-    if (!payment) {
-      logger.warn({ orderId }, 'webhook_unknown_order');
-      res.json({ ok: true, ignored: true });
-      return;
-    }
-
-    if (env.sonicPesaWebhookSecret) {
-      if (!signed) {
-        res.status(401).json({ ok: false, error: 'Invalid signature' });
-        return;
+  let payment: PaymentRow | null = null;
+  if (orderId) {
+    payment = await queryOne<PaymentRow>('SELECT * FROM payments WHERE order_id = $1', [orderId]);
+  }
+  if (!payment) {
+    const phone = webhookPhone(payload);
+    if (phone && signed) {
+      payment = await queryOne<PaymentRow>(
+        `SELECT * FROM payments
+         WHERE status = 'pending' AND phone = $1 AND created_at > now() - interval '20 minutes'
+         ORDER BY id DESC LIMIT 1`,
+        [phone],
+      );
+      if (payment && orderId && !payment.order_id) {
+        await queryOne('UPDATE payments SET order_id = $2 WHERE id = $1 AND order_id = \'\'', [
+          payment.id,
+          orderId,
+        ]);
       }
-      if (status === 'paid') await markPaid(payment.id);
-      if (status === 'failed') await markFailed(payment.id, 'Malipo hayakukamilika. Jaribu tena.');
-    } else {
-      // Without a webhook secret, never trust the body: ask SonicPesa directly.
-      await refreshPayment(payment);
     }
-    res.json({ ok: true });
-  }),
-);
+  }
+
+  if (!payment) {
+    logger.warn({ orderId }, 'webhook_unknown_order');
+    res.json({ ok: true, ignored: true });
+    return;
+  }
+
+  // A valid signature can settle immediately. Otherwise ask SonicPesa, never the raw body.
+  if (signed && status === 'paid') await markPaid(payment.id);
+  else if (signed && status === 'failed') await markFailed(payment.id, failureMessage(payload));
+  else await refreshPayment(payment);
+
+  res.json({ ok: true });
+}
+
+webhookRouter.post('/sonicpesa', (req, res, next) => {
+  handleSonicWebhook(req, res).catch(next);
+});

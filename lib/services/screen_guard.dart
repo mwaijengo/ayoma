@@ -9,9 +9,13 @@ class ScreenGuard {
   static const _channel = MethodChannel('ayoma/screen');
   static bool _secure = true;
 
+  /// Store screenshot builds only: `--dart-define=AYOMA_ALLOW_CAPTURE=true`.
+  static const _allowCapture = bool.fromEnvironment('AYOMA_ALLOW_CAPTURE');
+
   static bool get _supported => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
   static Future<void> setSecure(bool secure) async {
+    if (_allowCapture) secure = false;
     if (!_supported || secure == _secure) return;
     _secure = secure;
     try {

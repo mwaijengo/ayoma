@@ -10,7 +10,7 @@ class AppColors {
   static const surface = Color(0xFF101514);
   static const surface2 = Color(0xFF171D1B);
   static const sheet = Color(0xFF111615);
-  static const line = Color(0x14FFFFFF);
+  static const line = Color(0xFF2A3331);
   static const muted = Color(0xFF8D9794);
   static const dim = Color(0xFF68716E);
   static const faint = Color(0xFF515956);
@@ -22,7 +22,8 @@ class AppColors {
   static const amber = Color(0xFFFFC145);
   static const blue = Color(0xFF6CB8FF);
 
-  static Color greenA(double alpha) => green.withValues(alpha: alpha);
+  /// Solid green. Alpha is ignored so green is never mixed with another color.
+  static Color greenA(double _) => green;
 }
 
 class AppTheme {
@@ -107,21 +108,21 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surface2,
-        selectedColor: AppColors.greenA(0.16),
+        selectedColor: AppColors.green,
         side: const BorderSide(color: AppColors.line),
         labelStyle: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600),
-        secondaryLabelStyle: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w700),
-        checkmarkColor: AppColors.green,
+        secondaryLabelStyle: const TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700),
+        checkmarkColor: AppColors.ink,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           side: const WidgetStatePropertyAll(BorderSide(color: AppColors.line)),
           backgroundColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected) ? AppColors.greenA(0.16) : AppColors.surface2,
+            (s) => s.contains(WidgetState.selected) ? AppColors.green : AppColors.surface2,
           ),
           foregroundColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected) ? AppColors.green : AppColors.muted,
+            (s) => s.contains(WidgetState.selected) ? AppColors.ink : AppColors.muted,
           ),
         ),
       ),
@@ -149,7 +150,7 @@ class AppTheme {
         iconTheme: WidgetStateProperty.resolveWith(
           (s) => IconThemeData(
             size: 21,
-            color: s.contains(WidgetState.selected) ? AppColors.green : AppColors.muted,
+            color: s.contains(WidgetState.selected) ? AppColors.ink : AppColors.muted,
           ),
         ),
       ),

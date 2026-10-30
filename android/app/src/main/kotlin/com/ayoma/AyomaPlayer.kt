@@ -41,6 +41,11 @@ import io.flutter.view.TextureRegistry
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URLDecoder
@@ -96,7 +101,7 @@ data class PlayerSource(
         fun splitUrlHeaders(raw: String): Pair<String, Map<String, String>> {
             val trimmed = raw.trim()
             val pipe = trimmed.indexOf('|')
-            if (pipe < 0) return trimmed to emptyMap()
+            if (pipe < 0) return normalizePlaybackUrl(trimmed) to emptyMap()
             val headers = trimmed.substring(pipe + 1).split('&').mapNotNull { part ->
                 val eq = part.indexOf('=')
                 if (eq <= 0) return@mapNotNull null
@@ -104,7 +109,25 @@ data class PlayerSource(
                 val value = decode(part.substring(eq + 1)).trim()
                 if (name.isEmpty() || value.isEmpty()) null else canonicalHeader(name) to value
             }.toMap()
-            return trimmed.substring(0, pipe).trim() to headers
+            return normalizePlaybackUrl(trimmed.substring(0, pipe).trim()) to headers
+        }
+
+        /**
+         * Plays http and https the same way. A link with no scheme is treated as http.
+         * Scheme case is normalized so `HTTP://` and `HTTPS://` both open.
+         */
+        fun normalizePlaybackUrl(raw: String): String {
+            var url = raw.trim().replace(" ", "%20")
+            if (url.startsWith("//")) url = "http:$url"
+            val marker = "://"
+            val schemeEnd = url.indexOf(marker)
+            if (schemeEnd <= 0) return "http://$url"
+            val scheme = url.substring(0, schemeEnd).lowercase()
+            return if (scheme == "http" || scheme == "https") {
+                scheme + url.substring(schemeEnd)
+            } else {
+                url
+            }
         }
 
         private fun decode(value: String): String =
@@ -131,14 +154,31 @@ class AyomaPlayerPlugin(
 ) : MethodChannel.MethodCallHandler {
     private val players = HashMap<Long, AyomaPlayer>()
     private val channel = MethodChannel(messenger, "ayoma/player")
-    private val http: OkHttpClient by lazy {
-        OkHttpClient.Builder()
+    private val http: OkHttpClient by lazy { streamClient() }
+
+    /**
+     * Playback client for every http and https stream. Cleartext is allowed, and
+     * https certificates that Android would reject (self-signed or a mismatched
+     * name) are still accepted so the channel can open.
+     */
+    private fun streamClient(): OkHttpClient {
+        val trustAll = object : X509TrustManager {
+            override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
+            override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
+            override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
+        }
+        val ssl = SSLContext.getInstance("TLS").apply {
+            init(null, arrayOf<TrustManager>(trustAll), SecureRandom())
+        }
+        return OkHttpClient.Builder()
             .connectTimeout(12, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)
             .connectionPool(ConnectionPool(8, 5, TimeUnit.MINUTES))
             .retryOnConnectionFailure(true)
             .followRedirects(true)
             .followSslRedirects(true)
+            .sslSocketFactory(ssl.socketFactory, trustAll)
+            .hostnameVerifier { _, _ -> true }
             .build()
     }
 
@@ -325,11 +365,15 @@ class AyomaPlayer(
      * the Content-Type, or the bytes themselves. Shares the player's connection pool,
      * so the real request right after reuses the same connection.
      */
-    private fun probe(): String? = runCatching {
+    private fun probe(): String? = (readProbe(ranged = true) ?: readProbe(ranged = false))
+        ?.also { detected[source.url] = it }
+
+    /** A ranged read is faster. Servers that reject Range still get a full request. */
+    private fun readProbe(ranged: Boolean): String? = runCatching {
         val request = Request.Builder().url(source.url).apply {
             source.headers.forEach { (name, value) -> header(name, value) }
             if (source.headers.keys.none { it.equals("User-Agent", true) }) header("User-Agent", DEFAULT_USER_AGENT)
-            header("Range", "bytes=0-4095")
+            if (ranged) header("Range", "bytes=0-4095")
         }.build()
         http.newCall(request).execute().use { response ->
             if (!response.isSuccessful) return@runCatching null
@@ -347,7 +391,7 @@ class AyomaPlayer(
             }
             formatFromBytes(head, read)
         }
-    }.getOrNull()?.also { detected[source.url] = it }
+    }.getOrNull()
 
     private fun dataSource(http: OkHttpClient, headers: Map<String, String>): OkHttpDataSource.Factory {
         val factory = OkHttpDataSource.Factory(http)

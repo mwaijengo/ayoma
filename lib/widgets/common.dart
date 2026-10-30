@@ -125,7 +125,7 @@ class CircleIconButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xB8141918),
+          color: AppColors.surface2,
           border: Border.all(color: AppColors.line),
         ),
         child: Icon(icon, size: iconSize, color: AppColors.text),
@@ -210,9 +210,7 @@ class LiveDot extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.red,
-        boxShadow: ring
-            ? const [BoxShadow(color: Color(0x2BFF493F), spreadRadius: 4)]
-            : null,
+        border: ring ? Border.all(color: AppColors.red, width: 2) : null,
       ),
     );
   }
@@ -230,10 +228,10 @@ class CrownOrb extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: AppColors.greenA(0.1),
+        color: AppColors.green,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(LucideIcons.crown, size: iconSize, color: AppColors.green),
+      child: Icon(LucideIcons.crown, size: iconSize, color: AppColors.ink),
     );
   }
 }
@@ -428,7 +426,7 @@ class _CountdownTile extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(4, compact ? 9 : 11, 4, compact ? 7 : 9),
       decoration: BoxDecoration(
-        color: highlight ? AppColors.greenA(0.07) : const Color(0x0AFFFFFF),
+        color: highlight ? AppColors.green : AppColors.surface2,
         borderRadius: BorderRadius.circular(11),
         border: Border.all(
           color: highlight ? AppColors.greenA(0.2) : AppColors.line,
@@ -445,7 +443,7 @@ class _CountdownTile extends StatelessWidget {
                 weight: FontWeight.w800,
                 letterSpacing: -0.5,
                 height: 1,
-                color: highlight ? AppColors.green : AppColors.text,
+                color: highlight ? AppColors.ink : AppColors.text,
               ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
             ),
           ),
@@ -457,7 +455,7 @@ class _CountdownTile extends StatelessWidget {
               style: uStyle(
                 6.5,
                 weight: FontWeight.w800,
-                color: AppColors.muted,
+                color: highlight ? AppColors.ink : AppColors.muted,
                 letterSpacing: 0.4,
               ),
             ),
@@ -468,53 +466,34 @@ class _CountdownTile extends StatelessWidget {
   }
 }
 
-/// Card with a soft radial green glow layered over a solid or gradient fill.
+/// Card with a solid fill and a solid border.
 class GlowCard extends StatelessWidget {
   const GlowCard({
     super.key,
     required this.child,
     required this.radius,
     required this.borderColor,
-    required this.glowCenter,
-    required this.glowRadius,
-    required this.glowAlpha,
-    this.color,
-    this.gradient,
+    this.color = AppColors.surface,
     this.padding = const EdgeInsets.all(18),
   });
 
   final Widget child;
   final double radius;
   final Color borderColor;
-  final Alignment glowCenter;
-  final double glowRadius;
-  final double glowAlpha;
-  final Color? color;
-  final Gradient? gradient;
+  final Color color;
   final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
     final shape = BorderRadius.circular(radius);
-    return DecoratedBox(
+    return Container(
+      padding: padding,
       decoration: BoxDecoration(
         color: color,
-        gradient: gradient,
         borderRadius: shape,
+        border: Border.all(color: borderColor),
       ),
-      child: Container(
-        padding: padding,
-        decoration: BoxDecoration(
-          borderRadius: shape,
-          border: Border.all(color: borderColor),
-          gradient: RadialGradient(
-            center: glowCenter,
-            radius: glowRadius,
-            colors: [AppColors.greenA(glowAlpha), AppColors.greenA(0)],
-          ),
-        ),
-        child: child,
-      ),
+      child: child,
     );
   }
 }
@@ -584,7 +563,7 @@ class _Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xC8080B0A),
+        color: Colors.black,
         borderRadius: BorderRadius.circular(7),
       ),
       child: child,
@@ -702,7 +681,7 @@ class _ChannelCardState extends State<ChannelCard> {
                           height: 38,
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Color(0xB8080C0A),
+                            color: Colors.black,
                           ),
                           child: const Icon(
                             Icons.play_arrow_rounded,

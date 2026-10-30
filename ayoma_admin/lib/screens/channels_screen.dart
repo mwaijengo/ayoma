@@ -76,8 +76,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                 if (all.isEmpty)
                   EmptyState(
                     icon: LucideIcons.tv,
-                    title: 'No channels yet',
-                    message: 'Add your first stream. HLS, DASH, ClearKey and Widevine are supported.',
+                    title: 'Hakuna channel kwasasa',
                     action: FilledButton(onPressed: _open, child: const Text('Add channel')),
                   )
                 else

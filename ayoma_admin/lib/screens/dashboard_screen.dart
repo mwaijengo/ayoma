@@ -257,43 +257,47 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final api = SessionScope.read(context).api;
+    Future<void> remind(String kind, String title, String message) async {
+      final ok = await confirmDialog(context, title: title, message: message, confirmLabel: 'Tuma');
+      if (!ok || !context.mounted) return;
+      await runAction(context, () async {
+        final r = await api.remindExpired(kind: kind);
+        final sent = kind == 'expired' ? r.expired : r.expiring;
+        if (context.mounted) toast(context, 'Wamekumbushwa ${sent.delivered} kati ya ${sent.recipients}');
+      });
+    }
+
     final actions = [
       (
         LucideIcons.bellRing,
-        'Remind expired',
-        () async {
-          final ok = await confirmDialog(
-            context,
-            title: 'Remind users?',
-            message: 'Sends a renewal reminder to users whose package has ended or ends within 3 days.',
-            confirmLabel: 'Send reminders',
-          );
-          if (!ok || !context.mounted) return;
-          await runAction(context, () async {
-            final r = await api.remindExpired();
-            if (context.mounted) {
-              toast(context, 'Reminded ${r.expired.delivered + r.expiring.delivered} of ${r.expired.recipients + r.expiring.recipients} users');
-            }
-          });
-        },
+        'Wakumbushe malipo',
+        () => remind(
+          'expired',
+          'Wakumbushe malipo?',
+          'Watumiaji wote ambao vifurushi vyao vimeisha watapokea ujumbe wa kulipia.',
+        ),
       ),
       (
-        LucideIcons.send,
-        'Notify users',
-        () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const NotificationsScreen())),
+        LucideIcons.clock3,
+        'Vinakaribia kuisha',
+        () => remind(
+          'expiring',
+          'Wakumbushe vifurushi vinavyokaribia kuisha?',
+          'Watumiaji ambao vifurushi vyao vinaisha ndani ya siku 3 watapokea ukumbusho.',
+        ),
       ),
       (
         LucideIcons.rotateCw,
-        'Refresh apps',
+        'Refresh app zote',
         () async {
           final ok = await confirmDialog(
             context,
-            title: 'Refresh all apps?',
-            message: 'Every open AyomaMax app restarts and reloads channels, prices and settings.',
+            title: 'Refresh app zote za watumiaji?',
+            message: 'App zote za watumiaji zitajifungua upya na kupakia chaneli, bei na mipangilio mipya.',
             confirmLabel: 'Refresh',
           );
           if (!ok || !context.mounted) return;
-          await runAction(context, api.refreshApps, success: 'Apps will refresh on their next sync');
+          await runAction(context, api.refreshApps, success: 'App zote zitajirefresh sasa hivi');
         },
       ),
       (LucideIcons.plus, 'Add channel', () => onOpenTab(1)),

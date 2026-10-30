@@ -131,15 +131,10 @@ class _RemoteControlState extends State<RemoteControl> with WidgetsBindingObserv
     _afterBuild(state);
 
     if (state.updateRequired) {
-      final message = state.config.updateMessage;
-      return StatusScreen(
-        icon: LucideIcons.download,
-        title: 'Kuna toleo jipya',
-        message: message.isEmpty
-            ? 'Toleo hili halitumiki tena. Download toleo jipya ili uendelee kutazama.'
-            : message,
-        action: 'Download sasa',
-        onAction: () => _openUpdate(state),
+      return _UpdateRequiredScreen(
+        version: state.config.latestVersion,
+        message: state.config.updateMessage,
+        onDownload: () => _openUpdate(state),
       );
     }
     if (state.config.maintenance) {
@@ -169,7 +164,77 @@ class _RemoteControlState extends State<RemoteControl> with WidgetsBindingObserv
   }
 }
 
-/// Full-screen message used for maintenance, must-update and blocked states.
+/// Covers the whole app until the user installs the version the admin requires.
+class _UpdateRequiredScreen extends StatelessWidget {
+  const _UpdateRequiredScreen({required this.version, required this.message, required this.onDownload});
+
+  final String version;
+  final String message;
+  final VoidCallback onDownload;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: AppColors.bg,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(26, 24, 26, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          Image.asset('assets/brand/ayoma_logo.png', width: 230),
+                          const SizedBox(height: 34),
+                          Text(
+                            version.isEmpty ? 'Toleo jipya' : 'Toleo jipya $version',
+                            textAlign: TextAlign.center,
+                            style: uStyle(26, weight: FontWeight.w800, letterSpacing: -0.4),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            message.isEmpty
+                                ? 'Toleo hili halitumiki tena. Download toleo jipya ili uendelee kutazama.'
+                                : message,
+                            textAlign: TextAlign.center,
+                            style: uStyle(16, color: AppColors.text, height: 1.6),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Pressable(
+                  onTap: onDownload,
+                  semanticLabel: 'Download sasa',
+                  child: Container(
+                    height: 62,
+                    decoration: BoxDecoration(color: AppColors.green, borderRadius: BorderRadius.circular(16)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(LucideIcons.download, size: 22, color: AppColors.ink),
+                        const SizedBox(width: 10),
+                        Text('Download sasa', style: uStyle(18, weight: FontWeight.w800, color: AppColors.ink)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Full-screen message used for maintenance and blocked states.
 class StatusScreen extends StatefulWidget {
   const StatusScreen({
     super.key,

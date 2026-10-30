@@ -118,7 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final ok = await confirmDialog(
         context,
         title: 'Force update?',
-        message: 'Users on versions older than $min must update before they can use the app.',
+        message: 'Watumiaji wenye toleo la chini ya $latest wataona skrini ya "Download sasa" na hawataweza kutumia app mpaka wa-update.',
         confirmLabel: 'Save',
       );
       if (!ok) return;
@@ -253,8 +253,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 8),
                       SwitchRow(
                         title: 'Must update',
-                        subtitle: 'Older than the minimum version: app is blocked until updated. '
-                            'Otherwise users hawatoweza kutumia app.',
+                        subtitle: 'Ikiwa ON, watumiaji wenye toleo la chini ya Latest version hawataweza '
+                            'kutumia app mpaka wa-download toleo jipya.',
                         value: _force,
                         onChanged: (v) => setState(() => _force = v),
                       ),

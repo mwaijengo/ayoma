@@ -173,8 +173,9 @@ class AdminApi {
 
   Future<void> clearNotifications() => client.delete('/admin/notifications');
 
-  Future<({PushSummary expired, PushSummary expiring})> remindExpired() async {
-    final res = await client.post('/admin/notifications/remind');
+  /// [kind] is 'expired' or 'expiring'; null reminds both groups.
+  Future<({PushSummary expired, PushSummary expiring})> remindExpired({String? kind}) async {
+    final res = await client.post('/admin/notifications/remind', {'kind': ?kind});
     return (expired: _push(res['expired']), expiring: _push(res['expiring']));
   }
 

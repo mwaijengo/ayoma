@@ -46,7 +46,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       children: [
         PageHeader(
           title: 'Payments',
-          subtitle: 'SonicPesa and manual payments',
           actions: [
             FilledButton.icon(
               onPressed: _recordPayment,

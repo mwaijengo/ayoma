@@ -650,12 +650,18 @@ adminRouter.post(
   }),
 );
 
-/** Remind users whose package has ended or ends within 3 days. */
+const remindBody = z.object({ kind: z.enum(['expired', 'expiring']).optional() });
+const NO_PUSH = { recipients: 0, delivered: 0, failed: 0, invalidTokens: [] };
+
+/** Remind users whose package has ended and/or ends within 3 days. */
 adminRouter.post(
   '/notifications/remind',
-  route(async (_req, res) => {
-    const expired = await sendNotification({ ...REMINDERS.expired, target: 'expired' });
-    const expiring = await sendNotification({ ...REMINDERS.expiring, target: 'expiring' });
+  route(async (req, res) => {
+    const { kind } = remindBody.parse(req.body ?? {});
+    const expired =
+      kind === 'expiring' ? NO_PUSH : await sendNotification({ ...REMINDERS.expired, target: 'expired' });
+    const expiring =
+      kind === 'expired' ? NO_PUSH : await sendNotification({ ...REMINDERS.expiring, target: 'expiring' });
     res.json({ ok: true, expired, expiring });
   }),
 );

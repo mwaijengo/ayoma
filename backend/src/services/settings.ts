@@ -46,6 +46,16 @@ export async function bumpRefreshToken(): Promise<number> {
   return token;
 }
 
+function compareVersions(a: string, b: string): number {
+  const x = a.split('.').map((p) => Number.parseInt(p, 10) || 0);
+  const y = b.split('.').map((p) => Number.parseInt(p, 10) || 0);
+  for (let i = 0; i < 3; i++) {
+    const d = (x[i] ?? 0) - (y[i] ?? 0);
+    if (d !== 0) return Math.sign(d);
+  }
+  return 0;
+}
+
 export async function getAppConfig() {
   const [maintenance, update, support, refresh] = await Promise.all([
     getSetting('maintenance'),
@@ -53,9 +63,15 @@ export async function getAppConfig() {
     getSetting('support'),
     getSetting('refresh'),
   ]);
+  // Apps block below minVersion, so "must update" has to cover everything
+  // older than the latest release, including apps already installed.
+  const minVersion =
+    update.force && compareVersions(update.latestVersion, update.minVersion) > 0
+      ? update.latestVersion
+      : update.minVersion;
   return {
     maintenance,
-    update,
+    update: { ...update, minVersion },
     supportWhatsApp: support.whatsapp,
     refreshToken: refresh.token,
   };

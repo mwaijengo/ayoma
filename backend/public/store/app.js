@@ -5,12 +5,7 @@
   const isAndroid = /Android/i.test(ua);
   const isIOS = /iPhone|iPad|iPod/i.test(ua);
 
-  const MONTHS = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ago', 'Sep', 'Okt', 'Nov', 'Des'];
   const mb = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`;
-  const date = (iso) => {
-    const d = new Date(iso);
-    return Number.isNaN(d.getTime()) ? '' : `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-  };
   const setText = (sel, value) => $$(sel).forEach((el) => { el.textContent = value; });
 
   $('[data-year]').textContent = new Date().getFullYear();
@@ -30,15 +25,6 @@
       setText('[data-size]', mb(main.sizeBytes));
     }
     setText('[data-version]', release.version ?? '—');
-    const when = date(release.updatedAt);
-    setText('[data-updated]', when ? `Toleo ${release.version ?? '—'} · ${when}` : `Toleo ${release.version ?? '—'}`);
-
-    const notes = release.notes ?? [];
-    const list = $('[data-notes]');
-    if (notes.length && list) {
-      list.replaceChildren(...notes.map((n) => Object.assign(document.createElement('li'), { textContent: n })));
-      $$('[data-whats-new]').forEach((el) => { el.hidden = false; });
-    }
   };
 
   Promise.all([

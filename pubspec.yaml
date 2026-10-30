@@ -62,7 +62,7 @@ dev_dependencies:
 flutter_launcher_icons:
   image_path: assets/icon/app_icon.png
   android: true
-  adaptive_icon_background: "#000000"
+  adaptive_icon_background: "#00000000"
   adaptive_icon_foreground: assets/icon/app_icon_foreground.png
   ios: true
   # iOS icons cannot be transparent.

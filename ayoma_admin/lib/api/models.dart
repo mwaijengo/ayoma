@@ -7,13 +7,13 @@ Map<String, String> _headers(Object? v) =>
     v is Map ? {for (final e in v.entries) '${e.key}': '${e.value}'} : {};
 
 enum StreamType {
-  auto('Auto detect (any link: .php, .m3u8, .mpd, .ts, .mp4…)'),
-  hls('HLS playlist (.m3u8, or .php that returns one)'),
+  auto('Auto detect'),
+  hls('HLS (.m3u8)'),
   dash('DASH (.mpd)'),
-  ts('MPEG-TS live (.ts, IPTV /live/… links)'),
-  smooth('Smooth Streaming (.ism/Manifest)'),
-  rtsp('RTSP (rtsp://)'),
-  progressive('Video file (MP4, MKV, WebM, MP3)');
+  ts('MPEG-TS (.ts)'),
+  smooth('Smooth Streaming'),
+  rtsp('RTSP'),
+  progressive('Video file (MP4)');
 
   const StreamType(this.label);
   final String label;

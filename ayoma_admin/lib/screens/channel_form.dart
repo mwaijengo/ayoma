@@ -263,10 +263,7 @@ class _ChannelFormState extends State<ChannelForm> {
                         maxLines: null,
                         decoration: const InputDecoration(
                           labelText: 'Stream URL',
-                          hintText: 'https://…/index.m3u8, …/live.php, rtsp://…',
-                          helperText: 'Any link works: php, m3u8, mpd, ts, mp4, rtsp, udp. With "Auto" the app '
-                              'detects the format. Headers can follow the link: …|User-Agent=VLC&Referer=https://site/',
-                          helperMaxLines: 3,
+                          hintText: 'https://…',
                           prefixIcon: Icon(LucideIcons.link, size: 18),
                         ),
                       ),
@@ -277,8 +274,6 @@ class _ChannelFormState extends State<ChannelForm> {
                         dropdownColor: AppColors.surface2,
                         decoration: const InputDecoration(
                           labelText: 'Stream type',
-                          helperText: 'Keep "Auto" for any link. If a chosen type is wrong, the app finds the right one.',
-                          helperMaxLines: 2,
                           prefixIcon: Icon(LucideIcons.radio, size: 18),
                         ),
                         items: [

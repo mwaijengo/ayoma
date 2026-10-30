@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import '../data/catalog.dart';
 
@@ -27,13 +28,18 @@ class PlayerSizeEvent extends PlayerEvent {
 }
 
 class PlayerErrorEvent extends PlayerEvent {
-  const PlayerErrorEvent({required this.code, required this.drm, required this.detail});
+  const PlayerErrorEvent({required this.code, required this.drm, required this.detail, this.text, this.openUrl});
 
   final String code;
   final bool drm;
   final String detail;
+  final String? text;
+
+  /// A page the user can open instead, e.g. a YouTube video that blocks embedding.
+  final String? openUrl;
 
   String get message {
+    if (text != null) return text!;
     if (drm) return 'Imeshindikana kufungua ulinzi wa chaneli hii (DRM).';
     if (code.contains('NETWORK') || code.contains('TIMEOUT')) {
       return 'Mtandao unasumbua. Angalia bando lako kisha ujaribu tena.';
@@ -45,9 +51,21 @@ class PlayerErrorEvent extends PlayerEvent {
   }
 }
 
+/// What the player screen drives: the native stream player or the YouTube embed.
+abstract interface class StreamPlayer {
+  Stream<PlayerEvent> get events;
+  Widget get view;
+  Future<void> play();
+  Future<void> pause();
+  Future<void> retry();
+  Future<void> setMuted(bool muted);
+  Future<void> setMaxHeight(int maxHeight);
+  Future<void> dispose();
+}
+
 /// Media3 (ExoPlayer) on Android, drawn into a Flutter [Texture].
 /// Handles HLS, DASH, ClearKey, Widevine and custom request headers.
-class NativePlayer {
+class NativePlayer implements StreamPlayer {
   NativePlayer._(this.textureId)
     : events = EventChannel('ayoma/player/$textureId').receiveBroadcastStream().map(_parse).where((e) => e != null).cast();
 
@@ -71,15 +89,25 @@ class NativePlayer {
   }
 
   final int textureId;
+  @override
   final Stream<PlayerEvent> events;
   bool _disposed = false;
 
+  @override
+  late final Widget view = Texture(textureId: textureId);
+
+  @override
   Future<void> play() => _call('play');
+  @override
   Future<void> pause() => _call('pause');
+  @override
   Future<void> retry() => _call('retry');
+  @override
   Future<void> setMuted(bool muted) => _call('setMuted', {'muted': muted});
+  @override
   Future<void> setMaxHeight(int maxHeight) => _call('setMaxHeight', {'maxHeight': maxHeight});
 
+  @override
   Future<void> dispose() async {
     if (_disposed) return;
     await _call('dispose');

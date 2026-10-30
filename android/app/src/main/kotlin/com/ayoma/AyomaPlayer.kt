@@ -277,17 +277,17 @@ class AyomaPlayer(
             .setBackBuffer(0, false)
             .build()
 
-        // A cautious first guess avoids picking a quality the network cannot hold.
+        // Starts at a sharp SD/HD level, then climbs to the best quality the network holds.
         val bandwidth = DefaultBandwidthMeter.Builder(context)
-            .setInitialBitrateEstimate(1_000_000)
+            .setInitialBitrateEstimate(2_000_000)
             .build()
         val trackSelector = DefaultTrackSelector(
             context,
             AdaptiveTrackSelection.Factory(
-                8_000,
-                20_000,
-                20_000,
-                0.7f,
+                5_000,
+                15_000,
+                15_000,
+                0.75f,
             ),
         )
 

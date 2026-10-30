@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../data/catalog.dart';
 import '../services/api.dart';
 import '../services/native_player.dart';
+import '../services/youtube_player.dart';
 import '../state/app_state.dart';
 import 'payment_sheet.dart';
 import '../theme/app_theme.dart';
@@ -49,12 +51,13 @@ class _PlayerScreenState extends State<PlayerScreen>
   bool _controlsVisible = true;
   Timer? _hideTimer;
 
-  NativePlayer? _player;
+  StreamPlayer? _player;
   StreamSubscription<PlayerEvent>? _events;
   double? _aspectRatio;
   bool _loading = false;
   bool _buffering = false;
   String? _error;
+  String? _errorLink;
   bool _needsPayment = false;
 
   bool get _useNative =>
@@ -119,6 +122,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     setState(() {
       _loading = true;
       _error = null;
+      _errorLink = null;
       _needsPayment = false;
       _aspectRatio = null;
     });
@@ -128,11 +132,14 @@ class _PlayerScreenState extends State<PlayerScreen>
         fresh: fresh,
       );
       if (!mounted) return;
-      final player = await NativePlayer.open(
-        playback,
-        maxHeight: _maxHeight,
-        muted: _muted,
-      );
+      final youtube = YoutubeSource.parse('${playback['url'] ?? ''}');
+      final StreamPlayer player = youtube != null
+          ? await YoutubeEmbedPlayer.open(youtube, muted: _muted)
+          : await NativePlayer.open(
+              playback,
+              maxHeight: _maxHeight,
+              muted: _muted,
+            );
       if (!mounted) {
         player.dispose();
         return;
@@ -153,7 +160,7 @@ class _PlayerScreenState extends State<PlayerScreen>
         _error = e.message;
         _needsPayment = e.status == 402;
       });
-    } on PlatformException catch (_) {
+    } catch (_) {
       if (!mounted) return;
       setState(() {
         _loading = false;
@@ -180,8 +187,18 @@ class _PlayerScreenState extends State<PlayerScreen>
         setState(() => _aspectRatio = event.aspectRatio);
       case PlayerErrorEvent():
         NativePlayer.keepScreenOn(false);
-        setState(() => _error = event.message);
+        setState(() {
+          _error = event.message;
+          _errorLink = event.openUrl;
+        });
     }
+  }
+
+  Future<void> _openErrorLink() async {
+    final link = Uri.tryParse(_errorLink ?? '');
+    if (link == null) return;
+    final opened = await launchUrl(link, mode: LaunchMode.externalApplication).catchError((_) => false);
+    if (!opened && mounted) showAppToast(context, 'Imeshindikana kufungua YouTube');
   }
 
   Future<void> _onErrorAction() async {
@@ -268,13 +285,11 @@ class _PlayerScreenState extends State<PlayerScreen>
               if (_player != null && _aspectRatio != null)
                 isLandscape && _fill
                     // Stretches to every edge so nothing is cropped.
-                    ? SizedBox.expand(
-                        child: Texture(textureId: _player!.textureId),
-                      )
+                    ? SizedBox.expand(child: _player!.view)
                     : Center(
                         child: AspectRatio(
                           aspectRatio: _aspectRatio!,
-                          child: Texture(textureId: _player!.textureId),
+                          child: _player!.view,
                         ),
                       )
               else
@@ -581,6 +596,15 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     : LucideIcons.refreshCw,
                                 onTap: _onErrorAction,
                               ),
+                              if (_errorLink != null) ...[
+                                const SizedBox(height: 8),
+                                AppButton(
+                                  label: 'Fungua YouTube',
+                                  icon: LucideIcons.externalLink,
+                                  ghost: true,
+                                  onTap: _openErrorLink,
+                                ),
+                              ],
                             ],
                           ),
                         ),

@@ -1,10 +1,10 @@
 {
-  "version": "1.0.6",
-  "updatedAt": "2026-10-30T20:46:24.009Z",
+  "version": "1.0.7",
+  "updatedAt": "2026-10-30T21:35:43.778Z",
   "minAndroid": "7.0",
   "notes": [
-    "Chaneli za YouTube sasa zinacheza ndani ya app",
-    "Picha safi zaidi na zinaanza haraka"
+    "Video za YouTube sasa zinaonekana vizuri",
+    "Video haisimami ukigeuza skrini"
   ],
   "files": {
     "arm64": {

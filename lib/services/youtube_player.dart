@@ -97,9 +97,21 @@ class YoutubeEmbedPlayer implements StreamPlayer {
   bool _muted;
   late final WebViewController _web;
   final _events = StreamController<PlayerEvent>();
-  late final Widget _view = IgnorePointer(child: WebViewWidget(controller: _web));
+  /// Chromium draws video on its own hardware layer, which only shows when
+  /// Android composites the WebView itself (hybrid composition).
+  late final Widget _view = IgnorePointer(
+    child: _web.platform is AndroidWebViewController
+        ? WebViewWidget.fromPlatformCreationParams(
+            params: AndroidWebViewWidgetCreationParams(
+              controller: _web.platform,
+              displayWithHybridComposition: true,
+            ),
+          )
+        : WebViewWidget(controller: _web),
+  );
   Timer? _readyTimeout;
   bool _disposed = false;
+  bool _wantPlaying = true;
 
   @override
   Stream<PlayerEvent> get events => _events.stream;
@@ -117,6 +129,8 @@ class YoutubeEmbedPlayer implements StreamPlayer {
   String _html() {
     final config = jsonEncode({
       'host': _host,
+      'width': '100%',
+      'height': '100%',
       'videoId': _source.videoId ?? 'live_stream',
       'playerVars': {
         'autoplay': 1,
@@ -167,6 +181,11 @@ function onYouTubeIframeAPIReady(){
       case 'state':
         final state = msg['state'];
         if (state == 1) _readyTimeout?.cancel();
+        // YouTube pauses itself when the view is resized (e.g. on rotation).
+        if (state == 2 && _wantPlaying) {
+          _js('playVideo');
+          return;
+        }
         _events.add(
           PlayerStateEvent(
             buffering: state == 3 || state == -1 || state == 5,
@@ -202,10 +221,16 @@ function onYouTubeIframeAPIReady(){
   }
 
   @override
-  Future<void> play() => _js('playVideo');
+  Future<void> play() {
+    _wantPlaying = true;
+    return _js('playVideo');
+  }
 
   @override
-  Future<void> pause() => _js('pauseVideo');
+  Future<void> pause() {
+    _wantPlaying = false;
+    return _js('pauseVideo');
+  }
 
   @override
   Future<void> retry() async {

@@ -1,19 +1,19 @@
 {
-  "version": "1.0.5",
-  "updatedAt": "2026-10-30T12:18:44.109Z",
+  "version": "1.0.6",
+  "updatedAt": "2026-10-30T20:46:24.009Z",
   "minAndroid": "7.0",
   "notes": [
-    "Nembo mpya bila background",
-    "Skrini mpya ya kusasisha app"
+    "Chaneli za YouTube sasa zinacheza ndani ya app",
+    "Picha safi zaidi na zinaanza haraka"
   ],
   "files": {
     "arm64": {
       "file": "/downloads/AyomaMax.apk",
-      "sizeBytes": 22025371
+      "sizeBytes": 22402620
     },
     "armv7": {
       "file": "/downloads/AyomaMax-armv7.apk",
-      "sizeBytes": 19483243
+      "sizeBytes": 19893256
     }
   }
 }

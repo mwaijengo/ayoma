@@ -136,7 +136,11 @@ class AppState extends ChangeNotifier {
 
   String? get subscriberPhone => _prefs.getString(_kSubscriberPhone);
 
-  Catalog _catalog = Catalog.builtIn;
+  /// With a server, channels and banners only ever come from it, so content an
+  /// admin deleted can never show up, not even offline on a first launch.
+  late Catalog _catalog = api == null
+      ? Catalog.builtIn
+      : Catalog(plans: Catalog.builtIn.plans, channels: const [], slides: const []);
   RemoteConfig _config = const RemoteConfig();
   bool _blocked;
   bool _restartRequested = false;
@@ -273,7 +277,7 @@ class AppState extends ChangeNotifier {
   bool _hasServerCatalog = false;
 
   /// On a first launch, waits up to [timeout] for the server catalog so the
-  /// built-in demo channels are not shown.
+  /// home screen does not start empty.
   Future<void> waitForCatalog({Duration timeout = const Duration(seconds: 7)}) {
     if (api == null || _hasServerCatalog) return Future.value();
     return sync(force: true).timeout(timeout, onTimeout: () {});
@@ -288,6 +292,7 @@ class AppState extends ChangeNotifier {
       slides: server.slides,
     );
     _hasServerCatalog = true;
+    if (!fromCache) api?.keepPlaybackFor({for (final c in server.channels) ?c.id});
     _config = RemoteConfig.fromJson((res['config'] as Map?)?.cast<String, dynamic>() ?? const {});
     if (!fromCache && res['user'] is Map) applyServerUser((res['user'] as Map).cast<String, dynamic>());
 

@@ -66,11 +66,7 @@ class AdminApi {
       ? client.post('/admin/plans', {'id': p.id, ...p.toJson()})
       : client.put('/admin/plans/${p.id}', p.toJson());
 
-  /// Returns true when the package was only hidden because payments use it.
-  Future<bool> deletePlan(String id) async {
-    final res = await client.delete('/admin/plans/$id');
-    return res['deactivated'] == true;
-  }
+  Future<void> deletePlan(String id) => client.delete('/admin/plans/$id');
 
   // Users
   Future<UserPage> users({String search = '', String filter = 'all', int offset = 0}) async {

@@ -161,16 +161,15 @@ class _PlanFormState extends State<_PlanForm> {
     final ok = await confirmDialog(
       context,
       title: 'Delete ${_p.name}?',
-      message: 'If users have paid for it, it is hidden instead so payment history stays correct.',
+      message: 'It disappears from every app for good. Past payments and the days users already paid for are kept.',
       confirmLabel: 'Delete',
       destructive: true,
     );
     if (!ok || !mounted) return;
     final api = SessionScope.read(context).api;
-    var hidden = false;
-    final done = await runAction(context, () async => hidden = await api.deletePlan(_p.id));
+    final done = await runAction(context, () => api.deletePlan(_p.id));
     if (!done || !mounted) return;
-    toast(context, hidden ? 'Package hidden (it has payments)' : 'Package deleted');
+    toast(context, 'Package deleted');
     Navigator.pop(context, true);
   }
 

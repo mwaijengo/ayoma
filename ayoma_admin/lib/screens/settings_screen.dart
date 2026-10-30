@@ -273,7 +273,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         keyboardType: TextInputType.url,
                         decoration: const InputDecoration(
                           labelText: 'Download link',
-                          hintText: 'https://play.google.com/store/apps/details?id=…',
+                          hintText: 'https://ayoma-production.up.railway.app',
+                          helperText: 'Leave empty to send users to AyomaStore.',
                           prefixIcon: Icon(LucideIcons.download, size: 18),
                         ),
                       ),
@@ -296,7 +297,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         decoration: const InputDecoration(
                           labelText: 'WhatsApp number',
                           hintText: '255712345678',
-                          helperText: 'Format 255XXXXXXXXX. Used by "Wasiliana nasi" in the app.',
+                          helperText: 'Format 255XXXXXXXXX. Used by the user app and the AyomaStore "Msaada" button.',
                           prefixIcon: Icon(LucideIcons.messageCircle, size: 18),
                         ),
                       ),

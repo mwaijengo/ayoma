@@ -95,7 +95,9 @@ class _RemoteControlState extends State<RemoteControl> with WidgetsBindingObserv
   }
 
   Future<void> _openUpdate(AppState state) async {
-    final url = Uri.tryParse(state.config.updateUrl);
+    // AyomaStore is served from the API host, so it is the default download page.
+    final link = state.config.updateUrl.isNotEmpty ? state.config.updateUrl : state.api?.baseUrl ?? '';
+    final url = Uri.tryParse(link);
     var opened = false;
     if (url != null && url.hasScheme) {
       try {

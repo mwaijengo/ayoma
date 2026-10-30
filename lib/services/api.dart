@@ -100,6 +100,10 @@ class AyomaApi {
     return data;
   }
 
+  /// Forgets cached stream details for channels the server no longer lists.
+  void keepPlaybackFor(Set<int> channelIds) =>
+      _playback.removeWhere((id, _) => !channelIds.contains(id));
+
   Future<Json> startPayment({required String planId, required String name, required String phone}) async =>
       (await _authed('POST', '/app/payments', {'planId': planId, 'name': name, 'phone': phone}))['payment']
           as Json;

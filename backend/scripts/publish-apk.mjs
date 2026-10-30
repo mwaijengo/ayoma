@@ -14,8 +14,8 @@ const outDir = join(backend, 'public', 'downloads');
 const releasePath = join(outDir, 'release.json');
 
 const builds = [
-  { abi: 'arm64', from: 'app-arm64-v8a-release.apk', to: 'Ayoma.apk' },
-  { abi: 'armv7', from: 'app-armeabi-v7a-release.apk', to: 'Ayoma-armv7.apk' },
+  { abi: 'arm64', from: 'app-arm64-v8a-release.apk', to: 'AyomaMax.apk' },
+  { abi: 'armv7', from: 'app-armeabi-v7a-release.apk', to: 'AyomaMax-armv7.apk' },
 ];
 
 const pubspec = readFileSync(join(project, 'pubspec.yaml'), 'utf8');
@@ -42,5 +42,5 @@ for (const build of builds) {
 
 const release = { version, updatedAt: new Date().toISOString(), minAndroid: '7.0', notes, files };
 writeFileSync(releasePath, `${JSON.stringify(release, null, 2)}\n`);
-console.log(`AyomaStore now serves Ayoma ${version}:`);
+console.log(`AyomaStore now serves AyomaMax ${version}:`);
 for (const [abi, f] of Object.entries(files)) console.log(`  ${abi}: ${f.file} (${(f.sizeBytes / 1048576).toFixed(1)} MB)`);

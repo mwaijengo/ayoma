@@ -38,6 +38,27 @@ const startOfMonth = `(date_trunc('month', now() AT TIME ZONE '${BUSINESS_TZ}') 
 /** Revenue counts real money only, not free admin grants. */
 const REVENUE = `status = 'paid' AND provider <> 'admin_grant'`;
 
+/**
+ * Deletes images uploaded from the admin app once no channel or banner uses
+ * them any more, so removed content does not linger in the database.
+ */
+async function dropUnusedMedia(...urls: Array<string | null | undefined>): Promise<void> {
+  const ids = new Set<number>();
+  for (const url of urls) {
+    const match = /\/api\/v1\/media\/(\d+)\/?$/.exec(url ?? '');
+    if (match) ids.add(Number(match[1]));
+  }
+  for (const id of ids) {
+    const used = `%/api/v1/media/${id}`;
+    await query(
+      `DELETE FROM media WHERE id = $1
+         AND NOT EXISTS (SELECT 1 FROM channels WHERE image_url LIKE $2 OR image_url LIKE $2 || '/')
+         AND NOT EXISTS (SELECT 1 FROM slides WHERE image_url LIKE $2 OR image_url LIKE $2 || '/')`,
+      [id, used],
+    );
+  }
+}
+
 // ───────────────────────────── Dashboard ─────────────────────────────
 
 adminRouter.get(
@@ -181,6 +202,9 @@ adminRouter.put(
   '/channels/:id',
   route(async (req, res) => {
     const body = channelBody.parse(req.body);
+    const before = await queryOne<{ image_url: string }>('SELECT image_url FROM channels WHERE id = $1', [
+      intParam(req, 'id'),
+    ]);
     const row = await queryOne<ChannelRow>(
       `UPDATE channels SET
          name=$1, category=$2, image_url=$3, premium=$4, is_live=$5, active=$6, sort_order=$7,
@@ -191,6 +215,7 @@ adminRouter.put(
       [...channelValues(body), intParam(req, 'id')],
     );
     if (!row) throw new HttpError(404, 'Channel not found', 'NOT_FOUND');
+    if (before && before.image_url !== row.image_url) await dropUnusedMedia(before.image_url);
     res.json({ ok: true, channel: adminChannel(row) });
   }),
 );
@@ -211,8 +236,11 @@ adminRouter.patch(
 adminRouter.delete(
   '/channels/:id',
   route(async (req, res) => {
-    const rows = await query('DELETE FROM channels WHERE id = $1 RETURNING id', [intParam(req, 'id')]);
+    const rows = await query<{ image_url: string }>('DELETE FROM channels WHERE id = $1 RETURNING image_url', [
+      intParam(req, 'id'),
+    ]);
     if (rows.length === 0) throw new HttpError(404, 'Channel not found', 'NOT_FOUND');
+    await dropUnusedMedia(rows[0]!.image_url);
     res.json({ ok: true });
   }),
 );
@@ -254,12 +282,16 @@ adminRouter.put(
   '/slides/:id',
   route(async (req, res) => {
     const s = slideBody.parse(req.body);
+    const before = await queryOne<{ image_url: string }>('SELECT image_url FROM slides WHERE id = $1', [
+      intParam(req, 'id'),
+    ]);
     const row = await queryOne<SlideRow>(
       `UPDATE slides SET kicker=$1, title=$2, detail=$3, image_url=$4, channel_id=$5,
          sort_order=$6, active=$7 WHERE id=$8 RETURNING *`,
       [s.kicker, s.title, s.detail, s.imageUrl, s.channelId, s.sortOrder, s.active, intParam(req, 'id')],
     );
     if (!row) throw new HttpError(404, 'Slide not found', 'NOT_FOUND');
+    if (before && before.image_url !== row.image_url) await dropUnusedMedia(before.image_url);
     res.json({ ok: true, slide: adminSlide(row) });
   }),
 );
@@ -267,8 +299,11 @@ adminRouter.put(
 adminRouter.delete(
   '/slides/:id',
   route(async (req, res) => {
-    const rows = await query('DELETE FROM slides WHERE id = $1 RETURNING id', [intParam(req, 'id')]);
+    const rows = await query<{ image_url: string }>('DELETE FROM slides WHERE id = $1 RETURNING image_url', [
+      intParam(req, 'id'),
+    ]);
     if (rows.length === 0) throw new HttpError(404, 'Slide not found', 'NOT_FOUND');
+    await dropUnusedMedia(rows[0]!.image_url);
     res.json({ ok: true });
   }),
 );
@@ -335,17 +370,12 @@ adminRouter.put(
 adminRouter.delete(
   '/plans/:id',
   route(async (req, res) => {
+    // Payments keep their own copy of the package name and days, and users keep
+    // the time they already paid for, so the package itself can go for good.
     const id = String(req.params.id);
-    const used = await queryOne('SELECT 1 FROM payments WHERE plan_id = $1 LIMIT 1', [id]);
-    if (used) {
-      // Keep history intact: hide it from the app instead.
-      await query('UPDATE plans SET active = false WHERE id = $1', [id]);
-      res.json({ ok: true, deactivated: true });
-      return;
-    }
     const rows = await query('DELETE FROM plans WHERE id = $1 RETURNING id', [id]);
     if (rows.length === 0) throw new HttpError(404, 'Package not found', 'NOT_FOUND');
-    res.json({ ok: true, deactivated: false });
+    res.json({ ok: true });
   }),
 );
 
@@ -360,7 +390,13 @@ const USER_FILTERS: Record<string, string> = {
   blocked: 'u.blocked',
 };
 
-const USER_SELECT = `SELECT u.*, p.name AS plan_name FROM users u LEFT JOIN plans p ON p.id = u.plan_id`;
+/** Falls back to the last paid package name when that package was deleted. */
+const USER_SELECT = `SELECT u.*, COALESCE(p.name, (
+    SELECT pm.plan_name FROM payments pm
+    WHERE pm.user_id = u.id AND pm.plan_id = u.plan_id AND pm.status = 'paid'
+    ORDER BY pm.paid_at DESC NULLS LAST LIMIT 1
+  )) AS plan_name
+  FROM users u LEFT JOIN plans p ON p.id = u.plan_id`;
 
 adminRouter.get(
   '/users',

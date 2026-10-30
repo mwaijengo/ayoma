@@ -163,6 +163,21 @@ export const DEFAULT_SETTINGS: Record<string, unknown> = {
 };
 
 async function seed(): Promise<void> {
+  // Demo content goes into a brand-new database only. Settings rows are
+  // written on the first start, so later restarts never bring back channels,
+  // banners or packages that an admin deleted.
+  const settings = await queryOne<{ n: string }>('SELECT count(*)::text AS n FROM settings');
+  if (settings?.n === '0') await seedDemoContent();
+
+  for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
+    await query(
+      'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING',
+      [key, JSON.stringify(value)],
+    );
+  }
+}
+
+async function seedDemoContent(): Promise<void> {
   const plans = await queryOne<{ n: string }>('SELECT count(*)::text AS n FROM plans');
   if (plans?.n === '0') {
     await query(
@@ -220,13 +235,6 @@ async function seed(): Promise<void> {
       [IMAGES.stadium, IMAGES.cinema, IMAGES.lion],
     );
     logger.info('seeded_slides');
-  }
-
-  for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
-    await query(
-      'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING',
-      [key, JSON.stringify(value)],
-    );
   }
 }
 

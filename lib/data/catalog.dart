@@ -97,7 +97,7 @@ class Slide {
 const allCategory = 'Zote';
 
 /// Plans, channels and carousel shown in the app. Comes from the server and
-/// falls back to [Catalog.builtIn] when offline on first launch.
+/// uses [Catalog.builtIn] only without a server (tests).
 class Catalog {
   const Catalog({required this.plans, required this.channels, required this.slides});
 

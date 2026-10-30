@@ -147,7 +147,7 @@ class _PlayerScreenState extends State<PlayerScreen>
       });
     } on ApiException catch (e) {
       if (!mounted) return;
-      if (e.status == 402 || e.status == 403) _settings.sync(force: true);
+      if (e.status == 402 || e.status == 403 || e.status == 404) _settings.sync(force: true);
       setState(() {
         _loading = false;
         _error = e.message;

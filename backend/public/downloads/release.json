@@ -1,12 +1,10 @@
 {
-  "version": "1.0.2",
-  "updatedAt": "2026-10-30T07:10:00.000Z",
+  "version": "1.0.3",
+  "updatedAt": "2026-10-30T11:00:54.483Z",
   "minAndroid": "7.0",
   "notes": [
-    "Nembo mpya ya AYOMA TV kwenye programu na skrini ya kufungua",
-    "Kicheza video kinacheza link za http na https za aina zote",
-    "Rangi safi bila mchanganyiko kwenye skrini zote",
-    "Malipo kwa M-Pesa, Mixx by Yas, Airtel Money na HaloPesa"
+    "Chaneli zilizofutwa na admin zinaondoka kabisa kwenye app",
+    "Kitufe cha Download kinafungua AyomaStore"
   ],
   "files": {
     "arm64": {
@@ -15,7 +13,7 @@
     },
     "armv7": {
       "file": "/downloads/AyomaMax-armv7.apk",
-      "sizeBytes": 19484175
+      "sizeBytes": 19467791
     }
   }
 }

@@ -79,7 +79,7 @@ data class PlayerSource(
             return PlayerSource(
                 url = url,
                 streamType = args["streamType"]?.toString() ?: "auto",
-                headers = withDefaultReferer(url, headers),
+                headers = mergeHeaders(url, headers),
                 drmType = drm["type"]?.toString() ?: "none",
                 licenseUrl = drm["licenseUrl"]?.toString().orEmpty(),
                 licenseHeaders = stringMap(drm["licenseHeaders"]),
@@ -89,18 +89,100 @@ data class PlayerSource(
             )
         }
 
+        const val BROWSER_USER_AGENT =
+            "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) " +
+                "Chrome/124.0.0.0 Mobile Safari/537.36"
+
+        private val browserOnlyHeaders = setOf(
+            "sec-fetch-dest", "sec-fetch-mode", "sec-fetch-site", "sec-fetch-user",
+            "upgrade-insecure-requests", "sec-ch-ua", "sec-ch-ua-mobile", "sec-ch-ua-platform",
+        )
+
+        /** Azam/Nagra `tok_<jwt>` links carry the allowed site inside the token. */
+        private val tokenPath = Regex("""/tok_([^.]+)\.([^.]+)\.([^/]+)/""")
+        private val mediaPath = Regex("""\.(m3u8?|mpd|mp4|m4v|ts|mkv|webm)$""")
+        private val documentPath = Regex("""\.(html?|asp|aspx|cgi|jsp)$""")
+        private val iptvPortPath =
+            Regex("""^https?://[^/]+:\d{2,5}/(live|stream|play|hls|iptv|channel|ch)/""", RegexOption.IGNORE_CASE)
+        private val iptvPortTriple = Regex("""^https?://[^/]+:\d{2,5}/[^/]+/[^/]+/[^/?#]+$""", RegexOption.IGNORE_CASE)
+        private val iptvHostPath =
+            Regex("""^https?://[^/]+/(live|stream|play|hls|iptv|channel|ch)/[^/?#]+""", RegexOption.IGNORE_CASE)
+
         /**
-         * Many stream and player sites answer 403 unless the request names a Referer. When the
-         * channel sets none, send the link's own site, as a browser on that site would.
+         * A real media link (playlist, file, IPTV live path, plain http). These servers answer
+         * 403 when a page Referer/Origin is attached. `.php` gateways and `tok_` CDNs are not.
          */
-        fun withDefaultReferer(url: String, headers: Map<String, String>): Map<String, String> {
-            if (headers.keys.any { it.equals("Referer", ignoreCase = true) }) return headers
-            val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return headers
+        fun isDirectMedia(url: String): Boolean {
+            val trimmed = url.trim()
+            if (trimmed.isEmpty() || trimmed.contains(".php", ignoreCase = true)) return false
+            if (tokenPath.containsMatchIn(trimmed)) return false
+            val uri = runCatching { Uri.parse(trimmed) }.getOrNull() ?: return false
+            val path = uri.path.orEmpty().lowercase()
+            if (mediaPath.containsMatchIn(path)) return true
+            val base = trimmed.substringBefore('#')
+            if (iptvPortPath.containsMatchIn(base) || iptvPortTriple.containsMatchIn(base) || iptvHostPath.containsMatchIn(base)) {
+                return true
+            }
+            return uri.scheme.equals("http", ignoreCase = true) && !documentPath.containsMatchIn(path)
+        }
+
+        private fun siteOrigin(uri: Uri): String {
+            val port = if (uri.port == -1 || uri.port == 80 || uri.port == 443) "" else ":${uri.port}"
+            return "${uri.scheme}://${uri.host}$port"
+        }
+
+        private fun tokenSite(url: String): String? {
+            val payload = tokenPath.find(url)?.groupValues?.getOrNull(2)?.takeIf { it.isNotEmpty() } ?: return null
+            return runCatching {
+                val json = JSONObject(
+                    String(Base64.decode(payload.replace('-', '+').replace('_', '/'), Base64.DEFAULT), Charsets.UTF_8),
+                )
+                val allowed = listOf("url", "referer", "origin").map { json.optString(it).trim() }.firstOrNull { it.isNotEmpty() }
+                    ?: return@runCatching null
+                val uri = Uri.parse(allowed)
+                if (uri.scheme.isNullOrBlank() || uri.host.isNullOrBlank()) null else siteOrigin(uri)
+            }.getOrNull()
+        }
+
+        /** What a browser would send for this kind of link, before the channel's own headers. */
+        private fun defaultHeaders(url: String): Map<String, String> {
+            val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return emptyMap()
             val scheme = uri.scheme?.lowercase()
-            val host = uri.host
-            if ((scheme != "http" && scheme != "https") || host.isNullOrEmpty()) return headers
-            val port = if (uri.port > 0) ":${uri.port}" else ""
-            return headers + ("Referer" to "$scheme://$host$port/")
+            if ((scheme != "http" && scheme != "https") || uri.host.isNullOrEmpty()) return emptyMap()
+            val common = linkedMapOf(
+                "User-Agent" to BROWSER_USER_AGENT,
+                "Accept-Language" to "en-US,en;q=0.9,sw;q=0.8",
+                "Connection" to "keep-alive",
+            )
+            if (isDirectMedia(url)) {
+                common["Accept"] = "*/*"
+                return common
+            }
+            val origin = tokenSite(url) ?: siteOrigin(uri)
+            return linkedMapOf(
+                "Referer" to "$origin/",
+                "Origin" to origin,
+                "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,application/vnd.apple.mpegurl;q=0.8,*/*;q=0.7",
+            ) + common
+        }
+
+        /**
+         * Browser-like defaults for the link, then everything the admin set on top
+         * (the admin always wins). Direct media never carries browser-only headers.
+         */
+        fun mergeHeaders(url: String, explicit: Map<String, String>): Map<String, String> {
+            val merged = LinkedHashMap<String, String>()
+            fun put(rawName: String, rawValue: String) {
+                val name = canonicalHeader(rawName)
+                val value = rawValue.trim()
+                if (name.isEmpty() || value.isEmpty()) return
+                merged.keys.firstOrNull { it.equals(name, ignoreCase = true) }?.let(merged::remove)
+                merged[name] = value
+            }
+            defaultHeaders(url).forEach(::put)
+            explicit.forEach(::put)
+            if (isDirectMedia(url)) merged.keys.removeAll { it.lowercase() in browserOnlyHeaders }
+            return merged
         }
 
         private fun stringMap(value: Any?): Map<String, String> =
@@ -154,6 +236,11 @@ data class PlayerSource(
             "origin" -> "Origin"
             "cookie" -> "Cookie"
             "authorization" -> "Authorization"
+            "accept" -> "Accept"
+            "accept-language" -> "Accept-Language"
+            "connection" -> "Connection"
+            "content-type" -> "Content-Type"
+            "x-requested-with" -> "X-Requested-With"
             else -> name.trim()
         }
     }
@@ -620,7 +707,7 @@ class AyomaPlayer(
     companion object {
         private const val LOAD_RETRIES = 6
         private const val AUTO_RETRIES = 3
-        private const val DEFAULT_USER_AGENT = "AyomaMax/1.0 (Linux; Android) ExoPlayer"
+        private const val DEFAULT_USER_AGENT = PlayerSource.BROWSER_USER_AGENT
         private const val PROGRESSIVE = "progressive"
         private const val WEB_PAGE = "web_page"
 

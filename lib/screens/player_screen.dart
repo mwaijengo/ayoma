@@ -136,8 +136,13 @@ class _PlayerScreenState extends State<PlayerScreen>
         for (final e in ((playback['headers'] as Map?) ?? const {}).entries) '${e.key}': '${e.value}',
       };
       final youtube = YoutubeSource.parse('${playback['url'] ?? ''}');
+      // A website's player page (`…/watch.php`) goes straight to the web player; admins can
+      // still force the native player for such a link by choosing a stream type other than auto.
+      final page = '${playback['streamType'] ?? 'auto'}' == 'auto' ? WebPagePlayer.gatewayUrl('${playback['url'] ?? ''}') : null;
       final StreamPlayer player = youtube != null
           ? await YoutubeEmbedPlayer.open(youtube, muted: _muted)
+          : page != null
+          ? WebPagePlayer(page, headers: _pageHeaders, muted: _muted)
           : await NativePlayer.open(
               playback,
               maxHeight: _maxHeight,

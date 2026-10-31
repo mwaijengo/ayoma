@@ -30,6 +30,7 @@ class WebPagePlayer implements StreamPlayer {
                 if (!muted) await _js('if(typeof window.unmuteOrPlay==="function")window.unmuteOrPlay();');
               });
             }
+            Future.delayed(const Duration(seconds: 20), _reloadIfStuck);
           },
           onWebResourceError: (e) {
             if (_disposed || !(e.isForMainFrame ?? false)) return;
@@ -57,8 +58,47 @@ class WebPagePlayer implements StreamPlayer {
       's.textContent="html,body{margin:0;background:#000}video{object-fit:fill!important}";'
       '(document.head||document.documentElement).appendChild(s);}';
 
+  static final _mediaLink = RegExp(r'\.(m3u8?|mpd|mp4|m4v|webm|mkv|mov|ts)(\?|#|$)', caseSensitive: false);
+  static final _gatewayScript = RegExp(r'\.(php|asp|aspx|cgi|jsp|html?)(\?|#|/|$)', caseSensitive: false);
+
+  /// The page address when [raw] is a website's player page (`…/watch.php?channel=1`,
+  /// `…/embed/…`, `…/player/…`) rather than a media file, otherwise null.
+  /// Anything after a `|` is request headers, not part of the address.
+  static String? gatewayUrl(String raw) {
+    final link = raw.split('|').first.trim();
+    final uri = Uri.tryParse(link);
+    if (uri == null || !uri.hasScheme || !(uri.scheme == 'http' || uri.scheme == 'https')) return null;
+    if (_mediaLink.hasMatch(uri.path)) return null;
+    final path = uri.path.toLowerCase();
+    final isPage = _gatewayScript.hasMatch(uri.path) ||
+        path.contains('/embed/') ||
+        path.contains('/gateway/') ||
+        path.contains('/player/');
+    return isPage ? link : null;
+  }
+
+  /// Pages are flaky on mobile (the page's own player gives up after a few errors),
+  /// so a page whose video never started is loaded again, twice at most.
+  int _reloads = 0;
+
+  Future<void> _reloadIfStuck() async {
+    if (_disposed || _reloads >= 2) return;
+    try {
+      final playing = await _web.runJavaScriptReturningResult(
+        '(function(){var v=document.querySelector("video");return !!(v&&v.currentTime>0&&v.readyState>=2);})()',
+      );
+      if ('$playing' == 'true' || '$playing' == '1') return;
+    } catch (_) {
+      // Could not ask the page; load it again.
+    }
+    if (_disposed) return;
+    _reloads++;
+    _load();
+  }
+
   final String url;
   final Map<String, String> headers;
+
   /// Whether the app wants sound off; the page itself starts muted.
   bool muted;
   late final WebViewController _web;

@@ -1,10 +1,11 @@
 {
-  "version": "1.0.11",
-  "updatedAt": "2026-10-31T21:39:04.877Z",
+  "version": "1.0.12",
+  "updatedAt": "2026-10-31T22:01:58.359Z",
   "minAndroid": "7.0",
   "notes": [
-    "Link za http zenye Referer/headers sasa zinafanya kazi",
-    "Chaneli za Bein zinacheza, sauti inawaka yenyewe"
+    "Chaneli za Bein (link za .php/http) zinafunguka moja kwa moja kwenye web player",
+    "Headers zimeboreshwa kama leotena",
+    "Ukurasa ukikwama unajipakia upya"
   ],
   "files": {
     "arm64": {
@@ -13,7 +14,7 @@
     },
     "armv7": {
       "file": "/downloads/AyomaMax-armv7.apk",
-      "sizeBytes": 19893256
+      "sizeBytes": 19893260
     }
   }
 }

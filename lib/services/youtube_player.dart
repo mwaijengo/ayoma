@@ -148,9 +148,20 @@ class YoutubeEmbedPlayer implements StreamPlayer {
     return '''
 <!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<style>html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}#p{position:absolute;inset:0;width:100%;height:100%}</style>
+<style>html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}
+/* A 16:9 box that is stretched to the whole screen, so no black side bars and nothing cropped. */
+#p{position:absolute!important;left:50%!important;top:50%!important;width:var(--cw,100vw)!important;height:var(--ch,100vh)!important;
+transform:translate(-50%,-50%) scale(var(--sx,1),var(--sy,1));border:0}</style>
 </head><body><div id="p"></div>
 <script>
+function fit(){
+  var vw=innerWidth,vh=innerHeight,cw,ch;
+  if(vw/vh>16/9){ch=vh;cw=vh*16/9;}else{cw=vw;ch=vw*9/16;}
+  var s=document.documentElement.style;
+  s.setProperty('--cw',cw+'px');s.setProperty('--ch',ch+'px');
+  s.setProperty('--sx',vw/cw);s.setProperty('--sy',vh/ch);
+}
+fit();addEventListener('resize',fit);
 var player;
 function send(m){Ayoma.postMessage(JSON.stringify(m));}
 function onYouTubeIframeAPIReady(){

@@ -1,16 +1,15 @@
 {
-  "version": "1.0.9",
-  "updatedAt": "2026-10-31T20:32:40.908Z",
+  "version": "1.0.10",
+  "updatedAt": "2026-10-31T20:50:56.127Z",
   "minAndroid": "7.0",
   "notes": [
-    "Picha safi zaidi kwa chaguo-msingi (Auto)",
-    "Video inaanza haraka na haikatiki",
-    "Hakuna picha ya chaneli kwenye kicheza"
+    "Video sasa inajaza skrini nzima bila giza pembeni",
+    "Picha haikatwi"
   ],
   "files": {
     "arm64": {
       "file": "/downloads/AyomaMax.apk",
-      "sizeBytes": 22402616
+      "sizeBytes": 22402620
     },
     "armv7": {
       "file": "/downloads/AyomaMax-armv7.apk",

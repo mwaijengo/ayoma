@@ -19,6 +19,7 @@ class WebPagePlayer implements StreamPlayer {
           onPageFinished: (_) {
             if (_disposed) return;
             _events.add(const PlayerStateEvent(buffering: false, playing: true, ended: false));
+            _js(_fillScript);
             play();
             Future.delayed(const Duration(seconds: 3), play);
           },
@@ -41,6 +42,12 @@ class WebPagePlayer implements StreamPlayer {
     _events.add(const PlayerSizeEvent(16, 9));
     _load();
   }
+
+  /// Makes the page's video stretch to its whole box instead of leaving black side bars.
+  static const _fillScript =
+      'if(!document.getElementById("ayoma-fit")){var s=document.createElement("style");s.id="ayoma-fit";'
+      's.textContent="html,body{margin:0;background:#000}video{object-fit:fill!important}";'
+      '(document.head||document.documentElement).appendChild(s);}';
 
   final String url;
   final Map<String, String> headers;

@@ -520,13 +520,18 @@ class AyomaPlayer(
      */
     override fun onVideoSizeChanged(videoSize: VideoSize) {
         if (videoSize.width == 0 || videoSize.height == 0) return
-        if (videoSize.width > surfaceWidth || videoSize.height > surfaceHeight) {
-            surfaceWidth = maxOf(surfaceWidth, videoSize.width)
-            surfaceHeight = maxOf(surfaceHeight, videoSize.height)
+        val width = (videoSize.width * videoSize.pixelWidthHeightRatio).toInt()
+        // The picture is drawn stretched to the surface, so the surface must have the video's
+        // shape (4:3, 21:9 …) or it would look squashed. Same-shape quality changes keep it.
+        val shapeChanged = kotlin.math.abs(
+            (width.toFloat() / videoSize.height) / (surfaceWidth.toFloat() / surfaceHeight) - 1f,
+        ) > 0.02f
+        if (shapeChanged || width > surfaceWidth || videoSize.height > surfaceHeight) {
+            surfaceWidth = width
+            surfaceHeight = videoSize.height
             producer.setSize(surfaceWidth, surfaceHeight)
             attachSurface()
         }
-        val width = (videoSize.width * videoSize.pixelWidthHeightRatio).toInt()
         send(mapOf("event" to "size", "width" to width, "height" to videoSize.height))
     }
 

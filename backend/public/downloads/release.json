@@ -1,10 +1,10 @@
 {
-  "version": "1.0.10",
-  "updatedAt": "2026-10-31T20:50:56.127Z",
+  "version": "1.0.11",
+  "updatedAt": "2026-10-31T21:39:04.877Z",
   "minAndroid": "7.0",
   "notes": [
-    "Video sasa inajaza skrini nzima bila giza pembeni",
-    "Picha haikatwi"
+    "Link za http zenye Referer/headers sasa zinafanya kazi",
+    "Chaneli za Bein zinacheza, sauti inawaka yenyewe"
   ],
   "files": {
     "arm64": {

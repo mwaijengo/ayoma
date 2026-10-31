@@ -205,7 +205,7 @@ class _PlayerScreenState extends State<PlayerScreen>
   /// The link is a website's player page, so show that page instead of a stream.
   void _showWebPage(String url) {
     _closePlayer();
-    final player = WebPagePlayer(url, headers: _pageHeaders);
+    final player = WebPagePlayer(url, headers: _pageHeaders, muted: _muted);
     _player = player;
     _events = player.events.listen(_onEvent);
     NativePlayer.keepScreenOn(true);

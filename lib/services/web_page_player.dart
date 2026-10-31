@@ -9,7 +9,7 @@ import 'native_player.dart';
 /// Shows a website's own player page (e.g. `…/player.php?channel=1`) when a
 /// link turns out to be a page rather than a stream.
 class WebPagePlayer implements StreamPlayer {
-  WebPagePlayer(this.url, {this.headers = const {}}) {
+  WebPagePlayer(this.url, {this.headers = const {}, this.muted = false}) {
     final userAgent = _header('User-Agent');
     _web = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -20,8 +20,16 @@ class WebPagePlayer implements StreamPlayer {
             if (_disposed) return;
             _events.add(const PlayerStateEvent(buffering: false, playing: true, ended: false));
             _js(_fillScript);
-            play();
-            Future.delayed(const Duration(seconds: 3), play);
+            // Pages start muted and ask for a tap; touches never reach the page, so apply
+            // the app's own mute choice (and start the video) a few times while it loads.
+            for (final seconds in const [0, 1, 3, 6]) {
+              Future.delayed(Duration(seconds: seconds), () async {
+                await play();
+                await setMuted(muted);
+                // Pages with a "tap to unmute" screen expose a handler for that tap.
+                if (!muted) await _js('if(typeof window.unmuteOrPlay==="function")window.unmuteOrPlay();');
+              });
+            }
           },
           onWebResourceError: (e) {
             if (_disposed || !(e.isForMainFrame ?? false)) return;
@@ -51,6 +59,8 @@ class WebPagePlayer implements StreamPlayer {
 
   final String url;
   final Map<String, String> headers;
+  /// Whether the app wants sound off; the page itself starts muted.
+  bool muted;
   late final WebViewController _web;
   final _events = StreamController<PlayerEvent>();
   bool _disposed = false;
@@ -82,6 +92,8 @@ class WebPagePlayer implements StreamPlayer {
     _web.loadRequest(
       uri,
       headers: {
+        // Player sites often refuse (403) a request that names no Referer.
+        if (_header('Referer') == null && uri.hasAuthority) 'Referer': '${uri.scheme}://${uri.authority}/',
         for (final e in headers.entries)
           if (e.key.toLowerCase() != 'user-agent') e.key: e.value,
       },
@@ -110,8 +122,10 @@ class WebPagePlayer implements StreamPlayer {
   }
 
   @override
-  Future<void> setMuted(bool muted) =>
-      _js('document.querySelectorAll("video").forEach(function(v){v.muted=$muted;});');
+  Future<void> setMuted(bool muted) {
+    this.muted = muted;
+    return _js('document.querySelectorAll("video").forEach(function(v){v.muted=$muted;});');
+  }
 
   @override
   Future<void> setMaxHeight(int maxHeight) async {}

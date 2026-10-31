@@ -75,10 +75,11 @@ data class PlayerSource(
                 if (kid.isEmpty() || key.isEmpty()) null else kid to key
             }
             val (url, urlHeaders) = splitUrlHeaders(args["url"]?.toString().orEmpty())
+            val headers = urlHeaders + stringMap(args["headers"]).mapKeys { canonicalHeader(it.key) }
             return PlayerSource(
                 url = url,
                 streamType = args["streamType"]?.toString() ?: "auto",
-                headers = urlHeaders + stringMap(args["headers"]).mapKeys { canonicalHeader(it.key) },
+                headers = withDefaultReferer(url, headers),
                 drmType = drm["type"]?.toString() ?: "none",
                 licenseUrl = drm["licenseUrl"]?.toString().orEmpty(),
                 licenseHeaders = stringMap(drm["licenseHeaders"]),
@@ -86,6 +87,20 @@ data class PlayerSource(
                 maxHeight = (args["maxHeight"] as? Number)?.toInt() ?: 0,
                 muted = args["muted"] == true,
             )
+        }
+
+        /**
+         * Many stream and player sites answer 403 unless the request names a Referer. When the
+         * channel sets none, send the link's own site, as a browser on that site would.
+         */
+        fun withDefaultReferer(url: String, headers: Map<String, String>): Map<String, String> {
+            if (headers.keys.any { it.equals("Referer", ignoreCase = true) }) return headers
+            val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return headers
+            val scheme = uri.scheme?.lowercase()
+            val host = uri.host
+            if ((scheme != "http" && scheme != "https") || host.isNullOrEmpty()) return headers
+            val port = if (uri.port > 0) ":${uri.port}" else ""
+            return headers + ("Referer" to "$scheme://$host$port/")
         }
 
         private fun stringMap(value: Any?): Map<String, String> =

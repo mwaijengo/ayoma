@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../data/catalog.dart';
 import '../services/api.dart';
 import '../services/native_player.dart';
+import '../services/web_page_player.dart';
 import '../services/youtube_player.dart';
 import '../state/app_state.dart';
 import 'payment_sheet.dart';
@@ -59,6 +60,7 @@ class _PlayerScreenState extends State<PlayerScreen>
   String? _error;
   String? _errorLink;
   bool _needsPayment = false;
+  Map<String, String> _pageHeaders = const {};
 
   bool get _useNative =>
       NativePlayer.supported &&
@@ -132,6 +134,9 @@ class _PlayerScreenState extends State<PlayerScreen>
         fresh: fresh,
       );
       if (!mounted) return;
+      _pageHeaders = {
+        for (final e in ((playback['headers'] as Map?) ?? const {}).entries) '${e.key}': '${e.value}',
+      };
       final youtube = YoutubeSource.parse('${playback['url'] ?? ''}');
       final StreamPlayer player = youtube != null
           ? await YoutubeEmbedPlayer.open(youtube, muted: _muted)
@@ -185,6 +190,8 @@ class _PlayerScreenState extends State<PlayerScreen>
         if (ended) _player?.retry();
       case PlayerSizeEvent():
         setState(() => _aspectRatio = event.aspectRatio);
+      case PlayerErrorEvent(code: 'WEB_PAGE', :final detail):
+        _showWebPage(detail);
       case PlayerErrorEvent():
         NativePlayer.keepScreenOn(false);
         setState(() {
@@ -192,6 +199,16 @@ class _PlayerScreenState extends State<PlayerScreen>
           _errorLink = event.openUrl;
         });
     }
+  }
+
+  /// The link is a website's player page, so show that page instead of a stream.
+  void _showWebPage(String url) {
+    _closePlayer();
+    final player = WebPagePlayer(url, headers: _pageHeaders);
+    _player = player;
+    _events = player.events.listen(_onEvent);
+    NativePlayer.keepScreenOn(true);
+    setState(() => _buffering = true);
   }
 
   Future<void> _openErrorLink() async {

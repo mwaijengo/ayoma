@@ -1,10 +1,10 @@
 {
-  "version": "1.0.7",
-  "updatedAt": "2026-10-30T21:37:52.364Z",
+  "version": "1.0.8",
+  "updatedAt": "2026-10-31T20:18:02.215Z",
   "minAndroid": "7.0",
   "notes": [
-    "Video za YouTube sasa zinaonekana vizuri",
-    "Video haisimami ukigeuza skrini"
+    "Link za .php sasa zinacheza ndani ya app",
+    "Skrini ya mlalo na vitufe vinafanya kazi kwenye chaneli zote"
   ],
   "files": {
     "arm64": {

@@ -333,7 +333,9 @@ class AyomaPlayer(
             "ts", "progressive" -> PROGRESSIVE
             else -> formatFromUrl(source.url) ?: detected[source.url]
         }
-        if (known != null) {
+        if (known == WEB_PAGE) {
+            sendWebPage()
+        } else if (known != null) {
             load(known)
         } else {
             // Links such as …/live.php or …/stream?id=5 hide the format; ask the server once.
@@ -348,8 +350,16 @@ class AyomaPlayer(
             val found = probe()?.takeIf { it != tried }
                 ?: if (tried == MimeTypes.APPLICATION_M3U8) PROGRESSIVE else MimeTypes.APPLICATION_M3U8
             if (tried != null) detected[source.url] = found
-            handler.post { if (!released) load(found) }
+            handler.post {
+                if (released) return@post
+                if (found == WEB_PAGE) sendWebPage() else load(found)
+            }
         }
+    }
+
+    /** The link is a website's player page, not a stream; Dart shows it in a WebView. */
+    private fun sendWebPage() {
+        send(mapOf("event" to "error", "code" to "WEB_PAGE", "drm" to false, "message" to source.url))
     }
 
     private fun load(format: String) {
@@ -380,6 +390,7 @@ class AyomaPlayer(
             formatFromUrl(response.request.url.toString())?.let { return@runCatching it }
             val type = response.header("Content-Type").orEmpty().lowercase()
             formatFromContentType(type)?.let { return@runCatching it }
+            if ("text/html" in type) return@runCatching WEB_PAGE
             val head = ByteArray(4096)
             var read = 0
             response.body?.byteStream()?.let { input ->
@@ -584,6 +595,7 @@ class AyomaPlayer(
         private const val AUTO_RETRIES = 3
         private const val DEFAULT_USER_AGENT = "AyomaMax/1.0 (Linux; Android) ExoPlayer"
         private const val PROGRESSIVE = "progressive"
+        private const val WEB_PAGE = "web_page"
 
         /** Formats found by probing, so reopening a channel skips the probe. */
         private val detected = ConcurrentHashMap<String, String>()
@@ -623,6 +635,7 @@ class AyomaPlayer(
                 text.startsWith("#EXTM3U") || text.contains("#EXT-X-") -> MimeTypes.APPLICATION_M3U8
                 text.contains("<MPD") -> MimeTypes.APPLICATION_MPD
                 text.contains("<SmoothStreamingMedia") -> MimeTypes.APPLICATION_SS
+                text.startsWith("<!DOCTYPE html", ignoreCase = true) || text.contains("<html", ignoreCase = true) -> WEB_PAGE
                 else -> PROGRESSIVE
             }
         }

@@ -38,12 +38,7 @@ class PlayerScreen extends StatefulWidget {
 }
 
 class _PlayerScreenState extends State<PlayerScreen>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  late final AnimationController _drift = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 14),
-  )..repeat(reverse: true);
-
+    with WidgetsBindingObserver {
   late final AppState _settings = AppScope.read(context);
   bool _playing = true;
   late bool _muted = _settings.startMuted;
@@ -55,6 +50,9 @@ class _PlayerScreenState extends State<PlayerScreen>
   StreamPlayer? _player;
   StreamSubscription<PlayerEvent>? _events;
   double? _aspectRatio;
+
+  /// Height of the video that is actually playing, shown in the quality badge.
+  int? _videoHeight;
   bool _loading = false;
   bool _buffering = false;
   String? _error;
@@ -89,7 +87,6 @@ class _PlayerScreenState extends State<PlayerScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _hideTimer?.cancel();
-    _drift.dispose();
     _closePlayer();
     _restorePortrait();
     super.dispose();
@@ -127,6 +124,7 @@ class _PlayerScreenState extends State<PlayerScreen>
       _errorLink = null;
       _needsPayment = false;
       _aspectRatio = null;
+      _videoHeight = null;
     });
     try {
       final playback = await _settings.api!.playback(
@@ -189,7 +187,10 @@ class _PlayerScreenState extends State<PlayerScreen>
         setState(() => _buffering = buffering);
         if (ended) _player?.retry();
       case PlayerSizeEvent():
-        setState(() => _aspectRatio = event.aspectRatio);
+        setState(() {
+          _aspectRatio = event.aspectRatio;
+          _videoHeight = _player is NativePlayer ? event.height : null;
+        });
       case PlayerErrorEvent(code: 'WEB_PAGE', :final detail):
         _showWebPage(detail);
       case PlayerErrorEvent():
@@ -244,10 +245,8 @@ class _PlayerScreenState extends State<PlayerScreen>
     HapticFeedback.selectionClick();
     setState(() => _playing = !_playing);
     if (_playing) {
-      _drift.repeat(reverse: true);
       _player?.play();
     } else {
-      _drift.stop();
       _player?.pause();
     }
     if (_player != null) NativePlayer.keepScreenOn(_playing);
@@ -310,14 +309,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                         ),
                       )
               else
-                AnimatedBuilder(
-                  animation: _drift,
-                  builder: (_, child) => Transform.scale(
-                    scale: 1 + 0.06 * Curves.easeInOut.transform(_drift.value),
-                    child: child,
-                  ),
-                  child: NetImage(channel.image),
-                ),
+                const ColoredBox(color: Colors.black),
               AnimatedOpacity(
                 opacity: _playing ? 0 : 0.35,
                 duration: const Duration(milliseconds: 250),
@@ -408,7 +400,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                                   ),
                                 ),
                                 child: Text(
-                                  AppScope.of(context).effectiveQuality.badge,
+                                  _videoHeight != null && _videoHeight! > 0
+                                      ? '${_videoHeight}p'
+                                      : AppScope.of(context).effectiveQuality.badge,
                                   style: uStyle(8, weight: FontWeight.w800),
                                 ),
                               ),

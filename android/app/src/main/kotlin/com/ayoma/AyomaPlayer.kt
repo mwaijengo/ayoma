@@ -270,16 +270,17 @@ class AyomaPlayer(
             .setEnableDecoderFallback(true)
             .forceEnableMediaCodecAsynchronousQueueing()
 
-        // Live TV on mobile data: start quickly, then keep a deep buffer.
+        // Starts after under a second of video, but resumes only once a few seconds are
+        // ahead, so a short network dip never turns into repeated stop-and-go.
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(30_000, 90_000, 1_000, 2_500)
+            .setBufferDurationsMs(30_000, 60_000, 800, 3_000)
             .setPrioritizeTimeOverSizeThresholds(true)
             .setBackBuffer(0, false)
             .build()
 
         // Starts at a sharp SD/HD level, then climbs to the best quality the network holds.
         val bandwidth = DefaultBandwidthMeter.Builder(context)
-            .setInitialBitrateEstimate(2_000_000)
+            .setInitialBitrateEstimate(2_500_000)
             .build()
         val trackSelector = DefaultTrackSelector(
             context,
@@ -291,9 +292,12 @@ class AyomaPlayer(
             ),
         )
 
-        // After each stall, sit further behind the live edge so it does not repeat.
+        // Always plays at normal speed (no catch-up speeding or slowing, which makes sound and
+        // motion wobble). After each stall, sits further behind the live edge so it does not repeat.
         val liveSpeed = DefaultLivePlaybackSpeedControl.Builder()
-            .setTargetLiveOffsetIncrementOnRebufferMs(2_000)
+            .setFallbackMinPlaybackSpeed(1f)
+            .setFallbackMaxPlaybackSpeed(1f)
+            .setTargetLiveOffsetIncrementOnRebufferMs(3_000)
             .build()
 
         player = ExoPlayer.Builder(context, renderers)
@@ -312,15 +316,18 @@ class AyomaPlayer(
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
             .build()
+        // Never ask the display to switch refresh rate mid-stream; that blanks the picture.
+        player.videoChangeFrameRateStrategy = C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF
         player.addListener(this)
         player.volume = if (source.muted) 0f else 1f
         applyMaxHeight(source.maxHeight)
 
         events.setStreamHandler(this)
         producer.setCallback(this)
-        // Sized up front so the first frame (720p or less) needs no new surface.
-        surfaceWidth = 1280
-        surfaceHeight = 720
+        // Sized up front for the best quality allowed, so quality changes need no new surface.
+        val hd = source.maxHeight == 0 || source.maxHeight > 720
+        surfaceWidth = if (hd) 1920 else 1280
+        surfaceHeight = if (hd) 1080 else 720
         producer.setSize(surfaceWidth, surfaceHeight)
         attachSurface()
 

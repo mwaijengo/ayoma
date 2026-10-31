@@ -61,7 +61,7 @@ void main() {
     await switchTab(tester, find.text('Settings').last);
     expect(find.text(state.deviceId), findsOneWidget);
 
-    expect(state.quality, VideoQuality.p360);
+    expect(state.quality, VideoQuality.auto);
     expect(find.text('360p'), findsOneWidget);
     await tester.tap(find.text('Ubora wa video'));
     await tester.pumpAndSettle();

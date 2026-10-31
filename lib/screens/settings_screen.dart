@@ -168,7 +168,7 @@ class SettingsScreen extends StatelessWidget {
                 _SettingRow(
                   icon: LucideIcons.wifi,
                   title: 'Okoa bando',
-                  subtitle: 'Tumia bando kidogo',
+                  subtitle: 'Picha ndogo (360p) kuokoa bando',
                   trailing: UToggle(value: state.dataSaver),
                   onTap: () => state.setDataSaver(!state.dataSaver),
                 ),
@@ -315,8 +315,8 @@ class _QualitySheet extends StatelessWidget {
   final ValueChanged<VideoQuality> onSelect;
 
   static const _hints = {
-    VideoQuality.auto: 'Inabadilika kulingana na intaneti yako',
-    VideoQuality.p360: 'Chaguo la kawaida • inatumia bando kidogo',
+    VideoQuality.auto: 'Inapendekezwa • picha safi zaidi kulingana na intaneti yako',
+    VideoQuality.p360: 'Picha ndogo • inatumia bando kidogo',
     VideoQuality.p480: 'Picha nzuri • bando la wastani',
     VideoQuality.p720: 'HD • picha safi, inatumia bando kubwa',
     VideoQuality.p1080: 'Full HD • picha bora zaidi, bando kubwa sana',

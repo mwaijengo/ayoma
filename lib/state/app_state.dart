@@ -15,7 +15,8 @@ enum VideoQuality {
   p720('720p', '720p HD', 720),
   p1080('1080p', '1080p FHD', 1080);
 
-  static const fallback = VideoQuality.p360;
+  /// Best picture the connection can hold, unless the user picks a cap.
+  static const fallback = VideoQuality.auto;
 
   const VideoQuality(this.label, this.badge, this.maxHeight);
 

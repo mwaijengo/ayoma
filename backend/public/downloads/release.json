@@ -1,11 +1,11 @@
 {
-  "version": "1.0.12",
-  "updatedAt": "2026-10-31T22:01:58.359Z",
+  "version": "1.0.13",
+  "updatedAt": "2026-11-21T10:43:16.807Z",
   "minAndroid": "7.0",
   "notes": [
-    "Chaneli za Bein (link za .php/http) zinafunguka moja kwa moja kwenye web player",
-    "Headers zimeboreshwa kama leotena",
-    "Ukurasa ukikwama unajipakia upya"
+    "SokaMax embed.php links resolve to DASH + Widevine (nv-authorizations)",
+    "Audio starts smoother — bigger buffer, no scratchy underruns",
+    "Default quality is 360p on first launch"
   ],
   "files": {
     "arm64": {

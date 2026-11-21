@@ -64,12 +64,20 @@ class WebPagePlayer implements StreamPlayer {
   /// The page address when [raw] is a website's player page (`…/watch.php?channel=1`,
   /// `…/embed/…`, `…/player/…`) rather than a media file, otherwise null.
   /// Anything after a `|` is request headers, not part of the address.
+  ///
+  /// `embed.php?app=&key=` (SokaMax-style) is resolved on the server into a real
+  /// DASH URL, so it must not open in the WebView.
   static String? gatewayUrl(String raw) {
     final link = raw.split('|').first.trim();
     final uri = Uri.tryParse(link);
     if (uri == null || !uri.hasScheme || !(uri.scheme == 'http' || uri.scheme == 'https')) return null;
     if (_mediaLink.hasMatch(uri.path)) return null;
     final path = uri.path.toLowerCase();
+    if (path.endsWith('/embed.php') &&
+        (uri.queryParameters['app'] ?? '').isNotEmpty &&
+        (uri.queryParameters['key'] ?? '').isNotEmpty) {
+      return null;
+    }
     final isPage = _gatewayScript.hasMatch(uri.path) ||
         path.contains('/embed/') ||
         path.contains('/gateway/') ||

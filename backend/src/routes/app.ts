@@ -10,7 +10,7 @@ import { getActivePlan, refreshPayment, startMobilePayment } from '../services/p
 import {
   appPayment,
   appUser,
-  playbackConfig,
+  playbackConfigResolved,
   publicChannel,
   publicPlan,
   publicSlide,
@@ -129,7 +129,11 @@ appRouter.get(
     if (!channel.stream_url) {
       throw new HttpError(503, 'Chaneli hii haipatikani kwa sasa.', 'NO_STREAM');
     }
-    res.json({ ok: true, playback: playbackConfig(channel) });
+    const playback = await playbackConfigResolved(channel);
+    if (!playback) {
+      throw new HttpError(503, 'Chaneli hii haipatikani kwa sasa. Jaribu tena.', 'NO_STREAM');
+    }
+    res.json({ ok: true, playback });
   }),
 );
 

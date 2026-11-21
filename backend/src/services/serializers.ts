@@ -1,3 +1,4 @@
+import { isEmbedApiPlayer, resolveEmbedApi } from './embedResolver';
 import { userStatus } from './subscriptions';
 
 export type ChannelRow = {
@@ -78,6 +79,47 @@ export function parseClearKeys(raw: string): Array<{ kid: string; key: string }>
 
 /** Everything the native player needs to open a channel. */
 export function playbackConfig(c: ChannelRow) {
+  return buildPlayback(c);
+}
+
+/**
+ * Same as [playbackConfig], but resolves `embed.php?app=&key=` gateways
+ * (SokaMax and similar) into a real DASH/HLS URL + Widevine licence.
+ */
+export async function playbackConfigResolved(c: ChannelRow) {
+  if (!isEmbedApiPlayer(c.stream_url)) return buildPlayback(c);
+
+  const resolved = await resolveEmbedApi(c.stream_url);
+  if (!resolved) return null;
+
+  const headers: Record<string, string> = { ...(c.headers ?? {}), ...resolved.headers };
+  if (c.referer) headers.Referer = c.referer;
+  if (c.origin) headers.Origin = c.origin;
+  if (c.user_agent) headers['User-Agent'] = c.user_agent;
+
+  const drmType = resolved.drmType ?? c.drm_type;
+  const licenseUrl = resolved.licenseUrl ?? c.license_url;
+  const licenseHeaders: Record<string, string> = {
+    ...(c.license_headers ?? {}),
+    ...resolved.licenseHeaders,
+  };
+
+  return {
+    channelId: c.id,
+    name: c.name,
+    url: resolved.streamUrl,
+    streamType: resolved.streamType,
+    headers,
+    drm: {
+      type: drmType,
+      licenseUrl,
+      licenseHeaders,
+      clearKeys: drmType === 'clearkey' ? parseClearKeys(c.clearkey_keys) : [],
+    },
+  };
+}
+
+function buildPlayback(c: ChannelRow) {
   const headers: Record<string, string> = { ...(c.headers ?? {}) };
   if (c.referer) headers.Referer = c.referer;
   if (c.origin) headers.Origin = c.origin;

@@ -15,8 +15,8 @@ enum VideoQuality {
   p720('720p', '720p HD', 720),
   p1080('1080p', '1080p FHD', 1080);
 
-  /// Best picture the connection can hold, unless the user picks a cap.
-  static const fallback = VideoQuality.auto;
+  /// Default on first launch: 360p so streams (and audio) start stably.
+  static const fallback = VideoQuality.p360;
 
   const VideoQuality(this.label, this.badge, this.maxHeight);
 
@@ -182,7 +182,7 @@ class AppState extends ChangeNotifier {
   bool get autoLandscape => _autoLandscape;
   bool get autoHideControls => _autoHideControls;
 
-  /// Quality actually used for playback; "auto" drops to SD on data saver.
+  /// Quality shown in the UI; "auto" climbs from SD, or stays at 360p on data saver.
   VideoQuality get effectiveQuality => _quality == VideoQuality.auto
       ? (_dataSaver ? VideoQuality.p360 : VideoQuality.p720)
       : _quality;

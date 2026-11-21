@@ -68,7 +68,7 @@ class _PlayerScreenState extends State<PlayerScreen>
   bool get _busy =>
       _error == null && (_loading || (_player != null && _buffering));
 
-  /// "Auto" lets the player adapt freely, except on data saver.
+  /// "Auto" lets ABR climb (native starts near 360p); data saver caps at 360p.
   int get _maxHeight => _settings.quality == VideoQuality.auto
       ? (_settings.dataSaver ? VideoQuality.p360.maxHeight : 0)
       : _settings.quality.maxHeight;

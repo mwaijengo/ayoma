@@ -241,6 +241,8 @@ data class PlayerSource(
             "connection" -> "Connection"
             "content-type" -> "Content-Type"
             "x-requested-with" -> "X-Requested-With"
+            // Nagra / SokaMax Widevine licence auth
+            "nv-authorizations" -> "nv-authorizations"
             else -> name.trim()
         }
     }
@@ -372,25 +374,25 @@ class AyomaPlayer(
             .setEnableDecoderFallback(true)
             .forceEnableMediaCodecAsynchronousQueueing()
 
-        // Starts after under a second of video, but resumes only once a few seconds are
-        // ahead, so a short network dip never turns into repeated stop-and-go.
+        // Holds enough ahead that short dips never empty the audio buffer (scratchy sound).
+        // Starts after ~1.5s so the first picture still appears quickly.
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(30_000, 60_000, 800, 3_000)
+            .setBufferDurationsMs(25_000, 55_000, 1_500, 5_000)
             .setPrioritizeTimeOverSizeThresholds(true)
             .setBackBuffer(0, false)
             .build()
 
-        // Starts at a sharp SD/HD level, then climbs to the best quality the network holds.
+        // Start near 360p so the first segments fill cleanly; ABR climbs from there.
         val bandwidth = DefaultBandwidthMeter.Builder(context)
-            .setInitialBitrateEstimate(2_500_000)
+            .setInitialBitrateEstimate(800_000)
             .build()
         val trackSelector = DefaultTrackSelector(
             context,
             AdaptiveTrackSelection.Factory(
-                5_000,
-                15_000,
-                15_000,
-                0.75f,
+                8_000,
+                25_000,
+                25_000,
+                0.7f,
             ),
         )
 
